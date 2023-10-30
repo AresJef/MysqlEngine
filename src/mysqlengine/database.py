@@ -2530,6 +2530,15 @@ class Table:
             ) from err
 
     # Utils ---------------------------------------------------------------
+    def hash_md5(self, obj: Any) -> str:
+        """MD5 hash an object.
+
+        :param obj: `<Any>` Object can be stringified.
+        :raises ValueError: If failed to md5 hash the object.
+        :return <'str'>: The md5 hashed value in string.
+        """
+        return utils._hash_md5(obj)
+    
     def hash_sha256(self, obj: Any) -> str:
         """SHA256 hash an object.
 
@@ -6140,6 +6149,15 @@ class Database:
         return self._escape_args(args)
 
     # Utils ---------------------------------------------------------------
+    def hash_md5(self, obj: Any) -> str:
+        """MD5 hash an object.
+
+        :param obj: `<Any>` Object can be stringified.
+        :raises ValueError: If failed to md5 hash the object.
+        :return <'str'>: The md5 hashed value in string.
+        """
+        return utils._hash_md5(obj)
+    
     def hash_sha256(self, obj: Any) -> str:
         """SHA256 hash an object.
 

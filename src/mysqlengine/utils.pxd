@@ -29,4 +29,5 @@ cdef list _chunk_df(object df, int size, int chunks) except *
 cdef tuple _cal_time_span(object start, object end, int days, str unit, bint raise_error) except *
 cdef list _gen_time_span(object start, object end, int days, str unit, bint raise_error) except *
 # Hash
+cdef str _hash_md5(object obj) except *
 cdef str _hash_sha256(object obj) except *

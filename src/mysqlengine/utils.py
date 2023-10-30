@@ -10,6 +10,8 @@ from cython.cimports.cpython.set import PySet_Add as set_add  # type: ignore
 from cython.cimports.cpython.set import PySet_Contains as set_contains  # type: ignore
 from cython.cimports.cpython.list import PyList_GET_SIZE as list_len  # type: ignore
 from cython.cimports.cpython.list import PyList_Append as list_append  # type: ignore
+from cython.cimports.cpython.bytes import PyBytes_Check as is_bytes  # type: ignore
+from cython.cimports.cpython.string import PyString_Check as is_str  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_READ_CHAR as uni_loc  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_GET_LENGTH as str_len  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_Replace as uni_replace  # type: ignore
@@ -24,8 +26,8 @@ datetime.import_datetime()
 
 # Python imports
 import datetime
-from hashlib import sha256
 from decimal import Decimal
+from hashlib import sha256, md5
 from typing import Any, Union, Literal
 from re import compile, sub, MULTILINE, Pattern
 from pandas import DataFrame
@@ -1068,6 +1070,37 @@ def gen_time_span(
 # Hash -------------------------------------------------------------------------------------------------------------------
 @cython.cfunc
 @cython.inline(True)
+def _hash_md5(obj: object) -> str:
+    """(cfunc) MD5 hash an object.
+
+    :param obj: `<Any>` Object can be stringified.
+    :raises ValueError: If failed to md5 hash the object.
+    :return <'str'>: The md5 hashed value in string.
+    """
+    try:
+        if is_str(obj):
+            val = obj.encode("utf-8")
+        elif is_bytes(obj):
+            val = obj
+        else:
+            val = str(obj).encode("utf-8")
+    except Exception as err:
+        raise ValueError(f"Failed to md5 object: {repr(obj)}.\nError: {err}") from err
+    return md5(val).hexdigest()
+
+
+def hash_md5(obj: Any) -> str:
+    """MD5 hash an object.
+
+    :param obj: `<Any>` Object can be stringified.
+    :raises ValueError: If failed to md5 hash the object.
+    :return <'str'>: The md5 hashed value in string.
+    """
+    return _hash_md5(obj)
+
+
+@cython.cfunc
+@cython.inline(True)
 def _hash_sha256(obj: object) -> str:
     """(cfunc) SHA256 hash an object.
 
@@ -1076,10 +1109,16 @@ def _hash_sha256(obj: object) -> str:
     :return <'str'>: The sha256 hashed value in string.
     """
     try:
-        obj_: str = str(obj)
-        val: bytes = obj_.encode("utf-8")
+        if is_str(obj):
+            val = obj.encode("utf-8")
+        elif is_bytes(obj):
+            val = obj
+        else:
+            val = str(obj).encode("utf-8")
     except Exception as err:
-        raise ValueError(f"Failed to SHA256 {repr(obj)}. Error: {err}")
+        raise ValueError(
+            f"Failed to SHA256 object: {repr(obj)}.\nError: {err}"
+        ) from err
     return sha256(val).hexdigest()
 
 
