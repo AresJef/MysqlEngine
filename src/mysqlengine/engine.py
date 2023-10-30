@@ -164,7 +164,7 @@ class Engine:
         """
         # Generate cache key
         if init_args:
-            cache_key = db + ":" + utils._hash_md5(init_args)
+            cache_key = db + ":" + utils._hash_sha256(init_args)
         else:
             cache_key = db
 

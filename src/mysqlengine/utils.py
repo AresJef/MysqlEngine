@@ -24,10 +24,10 @@ datetime.import_datetime()
 
 # Python imports
 import datetime
+from hashlib import sha256
+from decimal import Decimal
 from typing import Any, Union, Literal
 from re import compile, sub, MULTILINE, Pattern
-from hashlib import md5
-from decimal import Decimal
 from pandas import DataFrame
 from cytimes.pydt import pydt
 from cytimes import cydatetime as cydt, cytimedelta
@@ -1068,26 +1068,26 @@ def gen_time_span(
 # Hash -------------------------------------------------------------------------------------------------------------------
 @cython.cfunc
 @cython.inline(True)
-def _hash_md5(obj: object) -> str:
-    """(cfunc) MD5 hash an object.
+def _hash_sha256(obj: object) -> str:
+    """(cfunc) SHA256 hash an object.
 
     :param obj: `<Any>` Object can be stringified.
-    :raises ValueError: If failed to MD5 hash the object.
-    :return <'str'>: The MD5 hashed value.
+    :raises ValueError: If failed to sha256 hash the object.
+    :return <'str'>: The sha256 hashed value in string.
     """
     try:
         obj_: str = str(obj)
         val: bytes = obj_.encode("utf-8")
     except Exception as err:
-        raise ValueError(f"Failed to MD5 {repr(obj)}. Error: {err}")
-    return md5(val).hexdigest()
+        raise ValueError(f"Failed to SHA256 {repr(obj)}. Error: {err}")
+    return sha256(val).hexdigest()
 
 
-def hash_md5(obj: Any) -> str:
-    """MD5 hash an object.
+def hash_sha256(obj: Any) -> str:
+    """SHA256 hash an object.
 
     :param obj: `<Any>` Object can be stringified.
-    :raises ValueError: If failed to MD5 hash the object.
-    :return <'str'>: The MD5 hashed value.
+    :raises ValueError: If failed to sha256 hash the object.
+    :return <'str'>: The sha256 hashed value in string.
     """
-    return _hash_md5(obj)
+    return _hash_sha256(obj)

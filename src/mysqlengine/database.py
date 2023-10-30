@@ -2530,14 +2530,14 @@ class Table:
             ) from err
 
     # Utils ---------------------------------------------------------------
-    def hash_md5(self, obj: Any) -> str:
-        """MD5 hash an object.
+    def hash_sha256(self, obj: Any) -> str:
+        """SHA256 hash an object.
 
         :param obj: `<Any>` Object can be stringified.
-        :raises ValueError: If failed to MD5 hash the object.
-        :return <'str'>: The MD5 hashed value.
+        :raises ValueError: If failed to sha256 hash the object.
+        :return <'str'>: The sha256 hashed value in string.
         """
-        return utils._hash_md5(obj)
+        return utils._hash_sha256(obj)
 
     def chunk_list(
         self,
@@ -6140,14 +6140,14 @@ class Database:
         return self._escape_args(args)
 
     # Utils ---------------------------------------------------------------
-    def hash_md5(self, obj: Any) -> str:
-        """MD5 hash an object.
+    def hash_sha256(self, obj: Any) -> str:
+        """SHA256 hash an object.
 
         :param obj: `<Any>` Object can be stringified.
-        :raises ValueError: If failed to MD5 hash the object.
-        :return <'str'>: The MD5 hashed value.
+        :raises ValueError: If failed to sha256 hash the object.
+        :return <'str'>: The sha256 hashed value in string.
         """
-        return utils._hash_md5(obj)
+        return utils._hash_sha256(obj)
 
     def chunk_list(
         self,
