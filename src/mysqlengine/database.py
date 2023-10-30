@@ -2538,7 +2538,7 @@ class Table:
         :return <'str'>: The md5 hashed value in string.
         """
         return utils._hash_md5(obj)
-    
+
     def hash_sha256(self, obj: Any) -> str:
         """SHA256 hash an object.
 
@@ -2591,6 +2591,15 @@ class Table:
         :return <list[DataFrame]>: List of chunked sub-DataFrames.
         """
         return utils._chunk_df(df, size or -1, chunks or -1)
+
+    def concat_df_columns(self, df: DataFrame) -> Series:
+        """Concatenate DataFrame values to one single columns `<Series[str]>`.
+
+        ### Notice
+        The new column `<Series>` should only be used for row comparison,
+        since the values will be escaped to `<str>` for concatenation.
+        """
+        return Series(df.values.tolist(), index=df.index).apply(self._escape_item)
 
     # Export & Import -----------------------------------------------------
     async def export_data(self, dir: str) -> int:
@@ -6157,7 +6166,7 @@ class Database:
         :return <'str'>: The md5 hashed value in string.
         """
         return utils._hash_md5(obj)
-    
+
     def hash_sha256(self, obj: Any) -> str:
         """SHA256 hash an object.
 
@@ -6210,6 +6219,15 @@ class Database:
         :return <list[DataFrame]>: List of chunked sub-DataFrames.
         """
         return utils._chunk_df(df, size or -1, chunks or -1)
+
+    def concat_df_columns(self, df: DataFrame) -> Series:
+        """Concatenate DataFrame values to one single columns `<Series[str]>`.
+
+        ### Notice
+        The new column `<Series>` should only be used for row comparison,
+        since the values will be escaped to `<str>` for concatenation.
+        """
+        return Series(df.values.tolist(), index=df.index).apply(self._escape_item)
 
     # Export & Import -----------------------------------------------------
     async def export_data(self, dir: str) -> int:

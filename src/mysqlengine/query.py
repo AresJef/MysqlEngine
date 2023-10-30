@@ -7570,7 +7570,7 @@ class COMPARE_DATA:
             )
 
         # Create unique columns
-        self._data[UNIQUE_COLUMN] = self._concat_columns(
+        self._data[UNIQUE_COLUMN] = self._tb.concat_df_columns(
             self._data[self._query._ops_unique]
         )
 
@@ -7585,7 +7585,7 @@ class COMPARE_DATA:
         if set_contains(self._query._operations, 2) or set_contains(
             self._query._operations, 5
         ):
-            self._data[COMPARE_COLUMN] = self._concat_columns(
+            self._data[COMPARE_COLUMN] = self._tb.concat_df_columns(
                 self._data[self._query._ops_compare]
             )
 
@@ -7760,12 +7760,6 @@ class COMPARE_DATA:
             self._query._name,
             self._name,
         )
-
-    @cython.cfunc
-    @cython.inline(True)
-    def _concat_columns(self, df: DataFrame) -> object:
-        "(cfunc) Concatenate DataFrame columns to one columns `<Series[str]>`."
-        return Series(df.values.tolist(), index=df.index).apply(self._tb._escape_item)
 
     @cython.cfunc
     @cython.inline(True)
