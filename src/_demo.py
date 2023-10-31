@@ -2687,7 +2687,7 @@ async def validate_engine() -> None:
     # Done
     t2 = time.perf_counter()
     print("Total time:", t2 - t1)
-    await server.close()
+    await engine.disconnect()
 
 
 if __name__ == "__main__":
