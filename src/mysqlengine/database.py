@@ -24,6 +24,7 @@ from cython.cimports.cpython.unicode import PyUnicode_GET_LENGTH as str_len  # t
 from cython.cimports.cpython.unicode import PyUnicode_Contains as str_contains  # type: ignore
 from cython.cimports.cytimes.pydt import pydt  # type: ignore
 from cython.cimports.cytimes.pddt import pddt  # type: ignore
+from cython.cimports.cytimes import cydatetime as cydt  # type: ignore
 from cython.cimports.mysqlengine import errors, settings, transcode, utils  # type: ignore
 from cython.cimports.mysqlengine.regex import Regex, TableRegex  # type: ignore
 from cython.cimports.mysqlengine.index import TableIndexes, Index  # type: ignore
@@ -37,13 +38,14 @@ np.import_array()
 datetime.import_datetime()
 
 # Python imports
-from typing import Any, Union, Literal, Iterator
 import os, datetime
 from uuid import uuid4
 from asyncio import gather, wait_for
+from typing import Any, Union, Literal, Iterator
 from pandas import DataFrame, Series, read_parquet
 from cytimes.pydt import pydt
 from cytimes.pddt import pddt
+from cytimes import cydatetime as cydt
 from mysqlengine.logs import logger
 from mysqlengine import errors, settings, transcode, utils
 from mysqlengine.regex import Regex, TableRegex
@@ -2600,6 +2602,22 @@ class Table:
         since the values will be escaped to `<str>` for concatenation.
         """
         return Series(df.values.tolist(), index=df.index).apply(self._escape_item)
+
+    def gen_dt_now(self) -> datetime.datetime:
+        "Generate datetime based on the current local time `<datetime.datetime>`."
+        return cydt.gen_dt_now()
+
+    def gen_dt_utcnow(self) -> datetime.datetime:
+        "Generate datetime based on the UTC time (timezone-aware) `<datetime.datetime>`."
+        return cydt.gen_dt_utcnow()
+
+    def gen_time_now(self) -> datetime.time:
+        "Generate time based on the current local time `<datetime.time>."
+        return cydt.gen_time_now()
+
+    def gen_time_utcnow(self) -> datetime.time:
+        "Generate time based on the UTC time (timezone-aware) `<datetime.time>."
+        return cydt.gen_time_utcnow()
 
     # Export & Import -----------------------------------------------------
     async def export_data(self, dir: str) -> int:
@@ -6228,6 +6246,22 @@ class Database:
         since the values will be escaped to `<str>` for concatenation.
         """
         return Series(df.values.tolist(), index=df.index).apply(self._escape_item)
+
+    def gen_dt_now(self) -> datetime.datetime:
+        "Generate datetime based on the current local time `<datetime.datetime>`."
+        return cydt.gen_dt_now()
+
+    def gen_dt_utcnow(self) -> datetime.datetime:
+        "Generate datetime based on the UTC time (timezone-aware) `<datetime.datetime>`."
+        return cydt.gen_dt_utcnow()
+
+    def gen_time_now(self) -> datetime.time:
+        "Generate time based on the current local time `<datetime.time>."
+        return cydt.gen_time_now()
+
+    def gen_time_utcnow(self) -> datetime.time:
+        "Generate time based on the UTC time (timezone-aware) `<datetime.time>."
+        return cydt.gen_time_utcnow()
 
     # Export & Import -----------------------------------------------------
     async def export_data(self, dir: str) -> int:
