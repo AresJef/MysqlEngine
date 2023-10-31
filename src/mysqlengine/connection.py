@@ -616,24 +616,10 @@ class Cursor:
 
     def __del__(self):
         if not self.get_closed():
-            try:
-                loop = get_event_loop()
-                if loop.is_running():
-                    loop.create_task(self.close())
-                else:
-                    loop.run_until_complete(self.close())
-            except Exception:
-                self._connection = None
-            except BaseException:
-                self._connection = None
-                self._result = None
-                self._columns = None
-                self._rows = None
-                raise
-
-        self._result = None
-        self._columns = None
-        self._rows = None
+            self._connection = None
+            self._result = None
+            self._columns = None
+            self._rows = None
 
     # Exceptions ---------------------------------------------------------------------------------
     Warning = errors.QueryWarning
@@ -2395,28 +2381,10 @@ class Connection:
 
     def __del__(self):
         if not self.get_closed():
-            try:
-                loop = get_event_loop()
-                if loop.is_running():
-                    loop.create_task(self.close())
-                else:
-                    loop.run_until_complete(self.close())
-            except Exception:
-                self._close()
-            except BaseException:
-                self._close()
-                self._ssl_context = None
-                self._cursorclass = None
-                self._reader = None
-                self._writer = None
-                self._result = None
-                raise
-
-        self._ssl_context = None
-        self._cursorclass = None
-        self._reader = None
-        self._writer = None
-        self._result = None
+            self._close()
+            self._ssl_context = None
+            self._cursorclass = None
+            self._result = None
 
     # Exceptions ---------------------------------------------------------------------------------
     Warning = errors.QueryWarning
@@ -3642,30 +3610,13 @@ class Pool:
 
     def __del__(self):
         if not self._closed:
-            try:
-                loop = get_event_loop()
-                if loop.is_running():
-                    loop.create_task(self.close(1))
-                else:
-                    loop.run_until_complete(self.close(1))
-            except Exception:
-                self._encure_closed()
-            except BaseException:
-                self._encure_closed()
-                self._ssl_context = None
-                self._cursorclass = None
-                self._free_conn = None
-                self._used_conn = None
-                self._invlid_conn = None
-                self._condition = None
-                raise
-
-        self._ssl_context = None
-        self._cursorclass = None
-        self._free_conn = None
-        self._used_conn = None
-        self._invlid_conn = None
-        self._condition = None
+            self._encure_closed()
+            self._ssl_context = None
+            self._cursorclass = None
+            self._free_conn = None
+            self._used_conn = None
+            self._invlid_conn = None
+            self._condition = None
 
 
 # Server =======================================================================================
