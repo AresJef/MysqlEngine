@@ -37,11 +37,10 @@ from re import compile, Match, IGNORECASE, DOTALL
 from _collections_abc import dict_values, dict_keys
 from struct import pack as struct_pack, unpack as struct_unpack
 from socket import SOL_SOCKET, SO_KEEPALIVE, IPPROTO_TCP, TCP_NODELAY
-from asyncio import get_running_loop, get_event_loop
-from asyncio import gather, wait_for, create_task, sleep
 from asyncio import CancelledError, IncompleteReadError
 from asyncio import Condition, StreamWriter, WriteTransport, BaseProtocol
 from asyncio import AbstractEventLoop, StreamReader, StreamReaderProtocol
+from asyncio import gather, wait_for, create_task, sleep, get_running_loop
 from numpy import record, ndarray
 from pandas import DataFrame, Series, DatetimeIndex, TimedeltaIndex
 from mysqlengine.logs import logger
@@ -3584,6 +3583,17 @@ class Pool:
         if self.get_invalid_size() > 0:
             for conn in self._invlid_conn:
                 conn.force_close()
+        self._ssl_context = None
+        self._cursorclass = None
+        self._free_conn = None
+        self._used_conn = None
+        self._invlid_conn = None
+        self._condition = None
+        self._closed = True
+
+    def force_close(self) -> None:
+        """Force close the Pool (exception free & internal use only)."""
+        self._encure_closed()
 
     # Special Methods ----------------------------------------------------------------------------
     async def __aenter__(self) -> Pool:
@@ -3610,13 +3620,11 @@ class Pool:
 
     def __del__(self):
         if not self._closed:
+            logger.error(
+                "%s is not closed properly. Please call `close()` "
+                "to gracefully shutdown the Pool/Server." % self
+            )
             self._encure_closed()
-            self._ssl_context = None
-            self._cursorclass = None
-            self._free_conn = None
-            self._used_conn = None
-            self._invlid_conn = None
-            self._condition = None
 
 
 # Server =======================================================================================

@@ -14,6 +14,7 @@ from cython.cimports.mysqlengine.connection import Server  # type: ignore
 
 # Python imports
 from typing import Any, Union
+from mysqlengine.logs import logger
 from mysqlengine import errors, utils
 from mysqlengine.connection import Server
 from mysqlengine.database import Database
@@ -239,6 +240,12 @@ class Engine:
         return self._length
 
     def __del__(self):
+        if not self._server._closed:
+            logger.error(
+                "%s is not closed properly. Please call `disconnect()` "
+                "to gracefully shutdown the Engine." % self
+            )
+            self._server._encure_closed()
         self._server = None
         self._databases_cls = None
         self._databases = None
