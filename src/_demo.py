@@ -2513,6 +2513,14 @@ async def validate_create_temp_query() -> None:
                                     indexes=["INDEX idx1 (bigint_type, smallint_type)"])
             .execute(conn, stats=True))
         
+    print("Temp Table [Create & Drop]".center(100))
+    async with tb.transaction() as conn:
+        tmp = await tb.create_temp(indexes="auto").values(data_df).execute(conn, stats=True)
+        print(await tb.select(from_=tmp).execute(conn, cursor=SSDfCursor))
+        print("temp table: '%s'" % tmp)
+        print("temp table dropped:", await tb.drop_temp(conn, tmp))
+        print("temp table dropped:", await tb.drop_temp(conn, tmp))
+        
     # Normal Table Select
     print("Normal Table.create_temp.select( all )".center(100))
     async with tb.transaction() as conn:

@@ -992,6 +992,18 @@ class Table:
         """
         return await self._db.unlock(conn)
 
+    async def drop_temp(self, conn: Connection, temp: str) -> bool:
+        """DROP TEMPORARY TABLE (IF EXISTS) from the connection.
+
+        :param conn: `<Connection>` The connection that created the TEMPORARY table.
+        :param temp: `<str>` Name of the TEMPORARY table. e.g. `'db.user_tmp0'`.
+        :raise: Subclass of `QueryError`.
+        :return <`bool`>: Whether the TEMPORARY table has been dropped.
+        """
+        async with conn.cursor(Cursor, False) as cur:
+            await cur.execute("DROP TEMPORARY TABLE IF EXISTS %s;" % temp)
+        return True
+
     # Basic SQL -----------------------------------------------------------
     async def create(self) -> bool:
         """`CREATE` the table `IF NOT EXSITS`.
