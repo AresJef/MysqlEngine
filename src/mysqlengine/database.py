@@ -41,11 +41,11 @@ datetime.import_datetime()
 import os, datetime
 from uuid import uuid4
 from asyncio import gather, wait_for
-from typing import Any, Union, Literal, Iterator
-from pandas import DataFrame, Series, read_parquet
+from typing import Any, Union, Literal, Iterator, overload
 from cytimes.pydt import pydt
 from cytimes.pddt import pddt
 from cytimes import cydatetime as cydt
+from pandas import DataFrame, Series, read_parquet
 from mysqlengine.logs import logger
 from mysqlengine import errors, settings, transcode, utils
 from mysqlengine.regex import Regex, TableRegex
@@ -807,6 +807,189 @@ class Table:
             resolve_absent_table=resolve_absent_table,
         )
 
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> tuple[dict[str, Any]]:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `<tuple>` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[dict[str, Any]]>`: The fetched result.
+
+        Example:
+        >>> await db.user.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> DataFrame:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `<DataFrame>` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<DataFrame>`: The fetched result.
+
+        Example:
+        >>> await db.user.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> tuple[tuple[Any]]:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `tuple[tuple]` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: The fetched result.
+
+        Example:
+        >>> await db.user.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
     async def fetch_query(
         self,
         stmt: str,
@@ -819,7 +1002,7 @@ class Table:
         warnings: bool = True,
         *,
         resolve_absent_table: bool = False,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
         """Execute a SQL statement and fetch the result.
 
         :param stmt: `<str>` The plain SQL statement to be executed.
@@ -1126,6 +1309,159 @@ class Table:
                 await cur.execute("TRUNCATE TABLE %s.%s;" % (self._db._name, name))
         return True
 
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
+        """Select table information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[dict]>`: Table information..
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """Select table information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Table information.
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """Select table information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Table information.
+        """
+        ...
+
     async def information(
         self,
         *info: Literal[
@@ -1155,7 +1491,7 @@ class Table:
         cursor: type[
             DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
         ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
         """Select table information from `INFORMATION_SCHEMA`.
 
         Available information options:
@@ -1174,7 +1510,7 @@ class Table:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Table information. (depends on 'cursor' type).
+        :return `<tuple/DataFrame>`: Table information (depends on 'cursor' type).
         """
         # Check info
         info_: str
@@ -1195,12 +1531,11 @@ class Table:
                 )
                 return await cur.fetchall()
 
+    @overload
     async def describe(
         self,
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
         """`DESCRIBE` the table.
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
@@ -1209,7 +1544,59 @@ class Table:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Table description. (depends on 'cursor' type).
+        :return `<tuple[dict]>`: Table description.
+        """
+        ...
+
+    @overload
+    async def describe(
+        self,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """`DESCRIBE` the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Table description.
+        """
+        ...
+
+    @overload
+    async def describe(
+        self,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """`DESCRIBE` the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Table description.
+        """
+        ...
+
+    async def describe(
+        self,
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """`DESCRIBE` the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
         """
         return await self._describe(self._name, cursor)
 
@@ -1229,7 +1616,7 @@ class Table:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Table description. (depends on 'cursor' type).
+        :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
         """
         # Execute describe query
         async with self._server.acquire() as conn:
@@ -1484,12 +1871,11 @@ class Table:
                 )
         return True
 
+    @overload
     async def show_index(
         self,
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
         """`SHOW INDEX` from the table.
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
@@ -1498,7 +1884,59 @@ class Table:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Index information. (depends on 'cursor' type).
+        :return `<tuple[dict]>`: Index information.
+        """
+        ...
+
+    @overload
+    async def show_index(
+        self,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """`SHOW INDEX` from the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Index information.
+        """
+        ...
+
+    @overload
+    async def show_index(
+        self,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """`SHOW INDEX` from the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Index information.
+        """
+        ...
+
+    async def show_index(
+        self,
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """`SHOW INDEX` from the table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
         """
         return await self._show_index(self._name, cursor)
 
@@ -1518,7 +1956,7 @@ class Table:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Index information. (depends on 'cursor' type).
+        :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
         """
         # Execute show query
         async with self._server.acquire() as conn:
@@ -2231,6 +2669,90 @@ class Table:
         return self._escape_args(args)
 
     # Filter data ---------------------------------------------------------
+    @overload
+    def filter_columns(self, data: dict, *columns: str) -> dict:
+        """Filter Table data by columns.
+
+        :param data: The data of the Table to filter. Support data types:
+            - `<dict>`: a single row of table data.
+            - `<list[dict]>`: multiple rows of table data.
+            - `<tuple[dict]>`: multiple rows of table data.
+            - `<DataFrame>`: a pandas DataFrame of table data.
+
+        :param columns: `<str>` Columns to keep in the data.
+            - If not provided, all columns in the data that
+              belongs to the table will be kept.
+            - If provided, only the specified columns that
+              also belongs to the table will be kept.
+
+        :raise: `QueryDataError`
+        :return `<dict>`: Table data filtered by columns.
+        """
+        ...
+
+    @overload
+    def filter_columns(self, data: list[dict], *columns: str) -> list[dict]:
+        """Filter Table data by columns.
+
+        :param data: The data of the Table to filter. Support data types:
+            - `<dict>`: a single row of table data.
+            - `<list[dict]>`: multiple rows of table data.
+            - `<tuple[dict]>`: multiple rows of table data.
+            - `<DataFrame>`: a pandas DataFrame of table data.
+
+        :param columns: `<str>` Columns to keep in the data.
+            - If not provided, all columns in the data that
+              belongs to the table will be kept.
+            - If provided, only the specified columns that
+              also belongs to the table will be kept.
+
+        :raise: `QueryDataError`
+        :return `<list[dict]>`: Table data filtered by columns.
+        """
+        ...
+
+    @overload
+    def filter_columns(self, data: tuple[dict], *columns: str) -> tuple[dict]:
+        """Filter Table data by columns.
+
+        :param data: The data of the Table to filter. Support data types:
+            - `<dict>`: a single row of table data.
+            - `<list[dict]>`: multiple rows of table data.
+            - `<tuple[dict]>`: multiple rows of table data.
+            - `<DataFrame>`: a pandas DataFrame of table data.
+
+        :param columns: `<str>` Columns to keep in the data.
+            - If not provided, all columns in the data that
+              belongs to the table will be kept.
+            - If provided, only the specified columns that
+              also belongs to the table will be kept.
+
+        :raise: `QueryDataError`
+        :return `<tuple[dict]>`: Table data filtered by columns.
+        """
+        ...
+
+    @overload
+    def filter_columns(self, data: DataFrame, *columns: str) -> DataFrame:
+        """Filter Table data by columns.
+
+        :param data: The data of the Table to filter. Support data types:
+            - `<dict>`: a single row of table data.
+            - `<list[dict]>`: multiple rows of table data.
+            - `<tuple[dict]>`: multiple rows of table data.
+            - `<DataFrame>`: a pandas DataFrame of table data.
+
+        :param columns: `<str>` Columns to keep in the data.
+            - If not provided, all columns in the data that
+              belongs to the table will be kept.
+            - If provided, only the specified columns that
+              also belongs to the table will be kept.
+
+        :raise: `QueryDataError`
+        :return `<DataFrame>`: Table data filtered by columns (original data type).
+        """
+        ...
+
     def filter_columns(
         self,
         data: Union[dict, list[dict], tuple[dict], DataFrame],
@@ -3857,6 +4379,159 @@ class TimeTable(Table):
                 raise i
         return True
 
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
+        """Select all sub-tables information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[dict]>`: All sub-tables information.
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """Select all sub-tables information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: All sub-tables information.
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "table_name",
+            "table_catalog",
+            "table_schema",
+            "table_type",
+            "engine",
+            "version",
+            "row_format",
+            "table_rows",
+            "avg_row_length",
+            "data_length",
+            "max_data_length",
+            "index_length",
+            "data_free",
+            "auto_increment",
+            "create_time",
+            "update_time",
+            "check_time",
+            "table_collation",
+            "checksum",
+            "create_options",
+            "table_comment",
+        ],
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """Select all sub-tables information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'table_name', 'table_catalog', 'table_schema', 'table_type', 'engine', 'version',
+        - 'row_format', 'table_rows', 'avg_row_length', 'data_length', 'max_data_length',
+        - 'index_length', 'data_free', 'auto_increment', 'create_time', 'update_time',
+        - 'check_time', 'table_collation', 'checksum', 'create_options', 'table_comment'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'table_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: All sub-tables information.
+        """
+        ...
+
     async def information(
         self,
         *info: Literal[
@@ -3886,7 +4561,7 @@ class TimeTable(Table):
         cursor: type[
             DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
         ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
         """Select all sub-tables information from `INFORMATION_SCHEMA`.
 
         Available information options:
@@ -3905,7 +4580,7 @@ class TimeTable(Table):
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: All sub-tables information. (depends on 'cursor' type).
+        :return `<tuple/DataFrame>`: All sub-tables information (depends on 'cursor' type).
         """
         # Check info
         info_: str
@@ -3926,12 +4601,11 @@ class TimeTable(Table):
                 )
                 return await cur.fetchall()
 
+    @overload
     async def describe(
         self,
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
         """`DESCRIBE` a sub-table.
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
@@ -3940,7 +4614,59 @@ class TimeTable(Table):
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Table description. (depends on 'cursor' type).
+        :return `<tuple[dict]>`: Table description.
+        """
+        ...
+
+    @overload
+    async def describe(
+        self,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """`DESCRIBE` a sub-table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Table description.
+        """
+        ...
+
+    @overload
+    async def describe(
+        self,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """`DESCRIBE` a sub-table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Table description.
+        """
+        ...
+
+    async def describe(
+        self,
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """`DESCRIBE` a sub-table.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
         """
         # Get one sub-table name
         name = await self._get_one_name()
@@ -4172,12 +4898,11 @@ class TimeTable(Table):
                 raise i
         return True
 
+    @overload
     async def show_index(
         self,
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
         """`SHOW INDEX` of the TimeTable.
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
@@ -4186,7 +4911,59 @@ class TimeTable(Table):
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Index information. (depends on 'cursor' type).
+        :return `<tuple[dict]>`: Index information.
+        """
+        ...
+
+    @overload
+    async def show_index(
+        self,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """`SHOW INDEX` of the TimeTable.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Index information.
+        """
+        ...
+
+    @overload
+    async def show_index(
+        self,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """`SHOW INDEX` of the TimeTable.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Index information.
+        """
+        ...
+
+    async def show_index(
+        self,
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """`SHOW INDEX` of the TimeTable.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
         """
         # Get one sub-table name
         name = await self._get_one_name()
@@ -5687,6 +6464,189 @@ class Database:
         else:
             return await execute_by_temp(timeout)
 
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> tuple[dict[str, Any]]:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `<tuple>` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[dict]>`: The fetched result.
+
+        Example:
+        >>> await db.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> DataFrame:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `<DataFrame>` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<DataFrame>`: The fetched result.
+
+        Example:
+        >>> await db.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
+    @overload
+    async def fetch_query(
+        self,
+        stmt: str,
+        args: Union[list, tuple, None] = None,
+        conn: Union[Connection, None] = None,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        resolve_absent_table: bool = False,
+    ) -> tuple[tuple[Any]]:
+        """Execute a SQL statement and fetch the result.
+
+        :param stmt: `<str>` The plain SQL statement to be executed.
+        :param args: `<list/tuple>` Arguments for the `'%s'` placeholders in 'stmt'. Defaults to `None`.
+        :param conn: `<Connection>` Specific connection to execute this query. Defaults to `None`.
+            - If provided, the conn will be used to execute the SQL 'stmt'.
+              This parameter is typically used within the `acquire()` or
+              `transaction()` context.
+            - If `None`, a temporary conn will be acquired from the Server pool
+              to execute the `stmt`. After execution, the temporary conn will
+              execute `COMMIT` and release back to the Server pool.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param resolve_absent_table: `<bool>` Whether to resolve absent table. Defaults to `False`.
+            - If `True`, when `stmt` involves a table that does not exist, an attempt
+              will be made to create the missing table (if it belongs to the current
+              database). If creation failed, an `SQLQueryProgrammingError` will be
+              raised; otherwise, an `SQLQueryTableDontExistsError` will be raised.
+            - If `False`, when `stmt` involves a table that does not exist, instead of
+              raising an error, an empty `tuple[tuple]` will be returned as the execution
+              result.
+
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: The fetched result.
+
+        Example:
+        >>> await db.fetch_query(
+                "SELECT name, price FROM db.user WHERE id = %s",
+                args=(1,), # does not support multi-rows arguments.
+                conn=None,
+                cursor=DictCursor,
+                resolve_absent_table=False,
+                timeout=10,
+                warnings=True,
+            )
+        """
+        ...
+
     async def fetch_query(
         self,
         stmt: str,
@@ -5699,7 +6659,7 @@ class Database:
         warnings: bool = True,
         *,
         resolve_absent_table: bool = False,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
         """Execute a SQL statement and fetch the result.
 
         :param stmt: `<str>` The plain SQL statement to be executed.
@@ -6006,6 +6966,7 @@ class Database:
         # Check existance
         return True if fetch and fetch[0] > 0 else False
 
+    @overload
     async def information(
         self,
         *info: Literal[
@@ -6017,10 +6978,8 @@ class Database:
             "sql_path",
             "default_encryption",
         ],
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
-    ) -> Union[tuple[dict | Any], DataFrame]:
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
+    ) -> tuple[dict[str, Any]]:
         """Select database information from `INFORMATION_SCHEMA`.
 
         Available information options:
@@ -6037,7 +6996,110 @@ class Database:
             - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
 
         :raise: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: Database information. (depends on 'cursor' type).
+        :return `<tuple[dict]>`: Database information.
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "catelog_name",
+            "schema_name",
+            "default_character_set_name",
+            "default_collation_name",
+            "sql_path",
+            "default_encryption",
+        ],
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+    ) -> DataFrame:
+        """Select database information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'catelog_name', 'schema_name', 'default_character_set_name',
+        - 'default_collation_name', 'sql_path', 'default_encryption'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'schema_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<DataFrame>`: Database information.
+        """
+        ...
+
+    @overload
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "catelog_name",
+            "schema_name",
+            "default_character_set_name",
+            "default_collation_name",
+            "sql_path",
+            "default_encryption",
+        ],
+        cursor: type[Cursor | SSCursor] = DictCursor,
+    ) -> tuple[tuple[Any]]:
+        """Select database information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'catelog_name', 'schema_name', 'default_character_set_name',
+        - 'default_collation_name', 'sql_path', 'default_encryption'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'schema_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: Database information.
+        """
+        ...
+
+    async def information(
+        self,
+        *info: Literal[
+            "*",
+            "catelog_name",
+            "schema_name",
+            "default_character_set_name",
+            "default_collation_name",
+            "sql_path",
+            "default_encryption",
+        ],
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """Select database information from `INFORMATION_SCHEMA`.
+
+        Available information options:
+        - 'catelog_name', 'schema_name', 'default_character_set_name',
+        - 'default_collation_name', 'sql_path', 'default_encryption'
+
+        :param info: `<str>` The information to be selected.
+            - If not specified, defaults to `'schema_name'`.
+            - Use `'*'` to select all information.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :raise: Subclass of `QueryError`.
+        :return `<tuple/DataFrame>`: Database information.
         """
         # Check info
         info_: str

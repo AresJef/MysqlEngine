@@ -47,8 +47,8 @@ from decimal import Decimal
 from time import struct_time
 from asyncio import gather, Semaphore
 from re import compile, Pattern, IGNORECASE
-from typing import Self, Any, Union, Literal, Callable, TYPE_CHECKING
 from _collections_abc import dict_values as dict_val, dict_keys as dict_key
+from typing import Self, Any, Union, Literal, Callable, TYPE_CHECKING, overload
 import numpy as np, pandas as pd
 from pandas import DataFrame, Series, concat
 from cytimes.pydt import pydt
@@ -5356,13 +5356,12 @@ class SelectQuery(SelectShare):
         return self._validate_stmt(stmt)
 
     # Execute ------------------------------------------------------------------------------------
+    @overload
     async def execute(
         self,
         conn: Union[Connection, None] = None,
         concurrency: int = 10,
-        cursor: type[
-            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
-        ] = DictCursor,
+        cursor: type[DictCursor | SSDictCursor] = DictCursor,
         timeout: Union[int, None] = None,
         warnings: bool = True,
         *,
@@ -5371,7 +5370,7 @@ class SelectQuery(SelectShare):
         min_wait_time: float = 0.2,
         max_wait_time: float = 2,
         stats: bool = False,
-    ) -> Union[tuple[dict | tuple], DataFrame]:
+    ) -> tuple[dict[str, Any]]:
         """Execute the SELECT query.
 
         :param conn: `<Connection>` The connection to execute the query. Defaults to `None`.
@@ -5417,7 +5416,200 @@ class SelectQuery(SelectShare):
 
         :param stats: `<bool>` Whether to print the query execution stats to the console. Defaults to `False`.
         :raises: Subclass of `QueryError`.
-        :return `<tuple/DataFrame>`: The fetched result (depends on 'cursor' type).
+        :return `<tuple[dict]>`: The fetched result.
+        """
+        ...
+
+    @overload
+    async def execute(
+        self,
+        conn: Union[Connection, None] = None,
+        concurrency: int = 10,
+        cursor: type[DfCursor | SSDfCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        retry_on_error: bool = True,
+        retry_times: int = -1,
+        min_wait_time: float = 0.2,
+        max_wait_time: float = 2,
+        stats: bool = False,
+    ) -> DataFrame:
+        """Execute the SELECT query.
+
+        :param conn: `<Connection>` The connection to execute the query. Defaults to `None`.
+            - If `None`, query will be executed by temporary connections
+              acquired from the Server pool.
+            - If specified, query will be executed by the given connection.
+
+        :param concurrency: `<int>` The maximum number of concurrent executions. Defaults to `10`.
+            - When the query is consists of multiple sub-queries (For example, select
+              data from different sub-tables of a TimeTable), this argument determines
+              the maximum number of concurrent query executions at the same time.
+            - * Notice: This argument is only applicable when `conn=None`. If 'conn'
+              is specified, all sub-queries will be executed sequentially by the
+              given connection.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param retry_on_error: `<bool>` Whether to retry when non-critial SQL error occurs. Defaults to `True`.
+            - If `True`, when a non-critical SQL error occurs (such as `connection timeout`,
+              `connection lost`, etc.), the query will be retried.
+            - If `False`, errors will be raised immediately.
+
+        :param retry_times: `<int>` The maximum number of retries. Defaults to `-1`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+            - For `retry_times <= 0`, the query retries indefinitely until success.
+            - For `retry_times > 0`, the query retries up to the given 'retry_times'.
+
+        :param min_wait_time: `<float>` The minimum wait time in seconds between each retries. Defaults to `0.2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param max_wait_time: `<float>` The maximum wait time in seconds between each retries. Defaults to `2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param stats: `<bool>` Whether to print the query execution stats to the console. Defaults to `False`.
+        :raises: Subclass of `QueryError`.
+        :return `<DataFrame>`: The fetched result.
+        """
+        ...
+
+    @overload
+    async def execute(
+        self,
+        conn: Union[Connection, None] = None,
+        concurrency: int = 10,
+        cursor: type[Cursor | SSCursor] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        retry_on_error: bool = True,
+        retry_times: int = -1,
+        min_wait_time: float = 0.2,
+        max_wait_time: float = 2,
+        stats: bool = False,
+    ) -> tuple[tuple[Any]]:
+        """Execute the SELECT query.
+
+        :param conn: `<Connection>` The connection to execute the query. Defaults to `None`.
+            - If `None`, query will be executed by temporary connections
+              acquired from the Server pool.
+            - If specified, query will be executed by the given connection.
+
+        :param concurrency: `<int>` The maximum number of concurrent executions. Defaults to `10`.
+            - When the query is consists of multiple sub-queries (For example, select
+              data from different sub-tables of a TimeTable), this argument determines
+              the maximum number of concurrent query executions at the same time.
+            - * Notice: This argument is only applicable when `conn=None`. If 'conn'
+              is specified, all sub-queries will be executed sequentially by the
+              given connection.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param retry_on_error: `<bool>` Whether to retry when non-critial SQL error occurs. Defaults to `True`.
+            - If `True`, when a non-critical SQL error occurs (such as `connection timeout`,
+              `connection lost`, etc.), the query will be retried.
+            - If `False`, errors will be raised immediately.
+
+        :param retry_times: `<int>` The maximum number of retries. Defaults to `-1`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+            - For `retry_times <= 0`, the query retries indefinitely until success.
+            - For `retry_times > 0`, the query retries up to the given 'retry_times'.
+
+        :param min_wait_time: `<float>` The minimum wait time in seconds between each retries. Defaults to `0.2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param max_wait_time: `<float>` The maximum wait time in seconds between each retries. Defaults to `2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param stats: `<bool>` Whether to print the query execution stats to the console. Defaults to `False`.
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[tuple]>`: The fetched result.
+        """
+        ...
+
+    async def execute(
+        self,
+        conn: Union[Connection, None] = None,
+        concurrency: int = 10,
+        cursor: type[
+            DictCursor | SSDictCursor | DfCursor | SSDfCursor | Cursor | SSCursor
+        ] = DictCursor,
+        timeout: Union[int, None] = None,
+        warnings: bool = True,
+        *,
+        retry_on_error: bool = True,
+        retry_times: int = -1,
+        min_wait_time: float = 0.2,
+        max_wait_time: float = 2,
+        stats: bool = False,
+    ) -> Union[tuple[dict[str, Any] | tuple[Any]], DataFrame]:
+        """Execute the SELECT query.
+
+        :param conn: `<Connection>` The connection to execute the query. Defaults to `None`.
+            - If `None`, query will be executed by temporary connections
+              acquired from the Server pool.
+            - If specified, query will be executed by the given connection.
+
+        :param concurrency: `<int>` The maximum number of concurrent executions. Defaults to `10`.
+            - When the query is consists of multiple sub-queries (For example, select
+              data from different sub-tables of a TimeTable), this argument determines
+              the maximum number of concurrent query executions at the same time.
+            - * Notice: This argument is only applicable when `conn=None`. If 'conn'
+              is specified, all sub-queries will be executed sequentially by the
+              given connection.
+
+        :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
+            - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
+            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+
+        :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
+            - If set to `None` or `0`, `tables.server.query_timeout` will be used
+              as the default timeout.
+            - `SQLQueryTimeoutError` will be raised when the timeout is reached.
+
+        :param warnings: `<bool>` Whether to issue any SQL related warnings. Defaults to `True`.
+
+        :param retry_on_error: `<bool>` Whether to retry when non-critial SQL error occurs. Defaults to `True`.
+            - If `True`, when a non-critical SQL error occurs (such as `connection timeout`,
+              `connection lost`, etc.), the query will be retried.
+            - If `False`, errors will be raised immediately.
+
+        :param retry_times: `<int>` The maximum number of retries. Defaults to `-1`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+            - For `retry_times <= 0`, the query retries indefinitely until success.
+            - For `retry_times > 0`, the query retries up to the given 'retry_times'.
+
+        :param min_wait_time: `<float>` The minimum wait time in seconds between each retries. Defaults to `0.2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param max_wait_time: `<float>` The maximum wait time in seconds between each retries. Defaults to `2`.
+            - * Notice: This argument is only applicable when `retry_on_error=True`.
+
+        :param stats: `<bool>` Whether to print the query execution stats to the console. Defaults to `False`.
+        :raises: Subclass of `QueryError`.
+        :return `<tuple[tuple]/tuple[dict]/DataFrame>`: The fetched result (depends on 'cursor' type).
         """
         # Set parameters
         self._concurrency = concurrency
