@@ -833,8 +833,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -894,8 +894,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -955,8 +955,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -1017,8 +1017,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -1352,8 +1352,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table information..
@@ -1403,8 +1403,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table information.
@@ -1454,8 +1454,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table information.
@@ -1506,8 +1506,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Table information (depends on 'cursor' type).
@@ -1540,8 +1540,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table description.
@@ -1557,8 +1557,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table description.
@@ -1574,8 +1574,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table description.
@@ -1592,8 +1592,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
@@ -1612,8 +1612,8 @@ class Table:
         :param name: `<str>` Name of the table.
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
@@ -1880,8 +1880,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Index information.
@@ -1897,8 +1897,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Index information.
@@ -1914,8 +1914,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Index information.
@@ -1932,8 +1932,8 @@ class Table:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
@@ -1952,8 +1952,8 @@ class Table:
         :param name: `<str>` Name of the table.
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
@@ -4422,8 +4422,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: All sub-tables information.
@@ -4473,8 +4473,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: All sub-tables information.
@@ -4524,8 +4524,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: All sub-tables information.
@@ -4576,8 +4576,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: All sub-tables information (depends on 'cursor' type).
@@ -4610,8 +4610,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table description.
@@ -4627,8 +4627,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table description.
@@ -4644,8 +4644,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table description.
@@ -4662,8 +4662,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Table description (depends on 'cursor' type).
@@ -4907,8 +4907,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Index information.
@@ -4924,8 +4924,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Index information.
@@ -4941,8 +4941,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Index information.
@@ -4959,8 +4959,8 @@ class TimeTable(Table):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Index information (depends on 'cursor' type).
@@ -6490,8 +6490,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -6551,8 +6551,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -6612,8 +6612,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -6674,8 +6674,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -6992,8 +6992,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Database information.
@@ -7026,8 +7026,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Database information.
@@ -7060,8 +7060,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Database information.
@@ -7095,8 +7095,8 @@ class Database:
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :raise: Subclass of `QueryError`.
         :return `<tuple/DataFrame>`: Database information.

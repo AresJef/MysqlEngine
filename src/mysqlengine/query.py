@@ -5388,8 +5388,8 @@ class SelectQuery(SelectShare):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -5452,8 +5452,8 @@ class SelectQuery(SelectShare):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -5516,8 +5516,8 @@ class SelectQuery(SelectShare):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
@@ -5581,8 +5581,8 @@ class SelectQuery(SelectShare):
 
         :param cursor: `<type[Cursor]>` The `Cursor` class to use for query execution. Defaults to `DictCursor`.
             - `DictCursor/SSDictCursor`: Fetch result as `<tuple[dict]>`.
-            - `DfCursor/SSDfCursor`: Fetch result as `pandas.DataFrame`.
-            - `Cursor/SSCursor`: Fetch result as `<tuple[Any]>` (without column names).
+            - `DfCursor/SSDfCursor`: Fetch result as `<pandas.DataFrame>`.
+            - `Cursor/SSCursor`: Fetch result as `<tuple[tuple]>` (without column names).
 
         :param timeout: `<int>` Query execution timeout in seconds. Dafaults to `None`.
             - If set to `None` or `0`, `tables.server.query_timeout` will be used
