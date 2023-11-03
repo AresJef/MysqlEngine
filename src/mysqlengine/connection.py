@@ -3584,6 +3584,14 @@ class Pool:
             - All network connections in the pool will be closed.
             - This operation is irreversible and should be used with caution.
         """
+        # Already closed
+        if self._closed:
+            return None  # exit
+
+        # Set closing flag
+        self._closing = True
+
+        # Force quit
         if self.get_free_size() > 0:
             for conn in self._free_conn:
                 conn.force_close()
