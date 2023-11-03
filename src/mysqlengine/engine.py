@@ -206,7 +206,7 @@ class Engine:
 
     # Disconnect ---------------------------------------------------------------------------------
     async def disconnect(self, countdown: Union[int, None] = None) -> None:
-        """Disconnect from the Server.
+        """Disconnect from the Server (close gracefully).
 
         ### *Notice* ###
         This method should normally be called when the Engine is no longer in use,
@@ -225,6 +225,20 @@ class Engine:
         """
         await self._server.close(countdown)
         self._databases = {}
+
+    def quit(self) -> None:
+        """Forcefully terminates all connections from the Server.
+
+        This method immediately stops the Server managed by the Engine,
+        and terminates all active connections in the pool. For a graceful
+        shutdown, use the `disconnect()` method instead.
+
+        Side Effects:
+            - All managed server processes will be interrupted.
+            - All network connections in the pool will be closed.
+            - This operation is irreversible and should be used with caution.
+        """
+        self._server.quit()
 
     # Speical Methods -----------------------------------------------------
     def __repr__(self) -> str:
@@ -245,7 +259,7 @@ class Engine:
                 "%s is not closed properly. Please call `disconnect()` "
                 "to gracefully shutdown the Engine." % self
             )
-            self._server._encure_closed()
+            self._server.quit()
         self._server = None
         self._databases_cls = None
         self._databases = None

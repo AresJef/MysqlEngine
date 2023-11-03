@@ -3572,8 +3572,18 @@ class Pool:
             await sleep(1)
             countdown += 1
 
-    def _encure_closed(self) -> None:
-        """Ensure the Pool is closed (exception free & internal use only)."""
+    def quit(self) -> None:
+        """Forcefully terminates all connections in the Pool (exception free).
+
+        This method immediately terminates all active connections
+        in the pool. For a graceful shutdown, use the `close()`
+        method instead.
+
+        Side Effects:
+            - All managed server processes will be interrupted.
+            - All network connections in the pool will be closed.
+            - This operation is irreversible and should be used with caution.
+        """
         if self.get_free_size() > 0:
             for conn in self._free_conn:
                 conn.force_close()
@@ -3590,10 +3600,6 @@ class Pool:
         self._invlid_conn = None
         self._condition = None
         self._closed = True
-
-    def force_close(self) -> None:
-        """Force close the Pool (exception free & internal use only)."""
-        self._encure_closed()
 
     # Special Methods ----------------------------------------------------------------------------
     async def __aenter__(self) -> Pool:
@@ -3624,7 +3630,7 @@ class Pool:
                 "%s is not closed properly. Please call `close()` "
                 "to gracefully shutdown the Pool/Server." % self
             )
-            self._encure_closed()
+            self.quit()
 
 
 # Server =======================================================================================
