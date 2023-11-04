@@ -5418,7 +5418,6 @@ class SelectQuery(SelectShare):
         :raises: Subclass of `QueryError`.
         :return `<tuple[dict]>`: The fetched result.
         """
-        ...
 
     @overload
     async def execute(
@@ -5482,7 +5481,6 @@ class SelectQuery(SelectShare):
         :raises: Subclass of `QueryError`.
         :return `<DataFrame>`: The fetched result.
         """
-        ...
 
     @overload
     async def execute(
@@ -5546,7 +5544,6 @@ class SelectQuery(SelectShare):
         :raises: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: The fetched result.
         """
-        ...
 
     async def execute(
         self,

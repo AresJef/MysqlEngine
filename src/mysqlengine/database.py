@@ -866,7 +866,6 @@ class Table:
                 warnings=True,
             )
         """
-        ...
 
     @overload
     async def fetch_query(
@@ -927,7 +926,6 @@ class Table:
                 warnings=True,
             )
         """
-        ...
 
     @overload
     async def fetch_query(
@@ -988,7 +986,6 @@ class Table:
                 warnings=True,
             )
         """
-        ...
 
     async def fetch_query(
         self,
@@ -1358,7 +1355,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table information..
         """
-        ...
 
     @overload
     async def information(
@@ -1409,7 +1405,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table information.
         """
-        ...
 
     @overload
     async def information(
@@ -1460,7 +1455,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table information.
         """
-        ...
 
     async def information(
         self,
@@ -1546,7 +1540,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table description.
         """
-        ...
 
     @overload
     async def describe(
@@ -1563,7 +1556,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table description.
         """
-        ...
 
     @overload
     async def describe(
@@ -1580,7 +1572,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table description.
         """
-        ...
 
     async def describe(
         self,
@@ -1886,7 +1877,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Index information.
         """
-        ...
 
     @overload
     async def show_index(
@@ -1903,7 +1893,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Index information.
         """
-        ...
 
     @overload
     async def show_index(
@@ -1920,7 +1909,6 @@ class Table:
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Index information.
         """
-        ...
 
     async def show_index(
         self,
@@ -2688,7 +2676,6 @@ class Table:
         :raise: `QueryDataError`
         :return `<dict>`: Table data filtered by columns.
         """
-        ...
 
     @overload
     def filter_columns(self, data: list[dict], *columns: str) -> list[dict]:
@@ -2709,7 +2696,6 @@ class Table:
         :raise: `QueryDataError`
         :return `<list[dict]>`: Table data filtered by columns.
         """
-        ...
 
     @overload
     def filter_columns(self, data: tuple[dict], *columns: str) -> tuple[dict]:
@@ -2730,7 +2716,6 @@ class Table:
         :raise: `QueryDataError`
         :return `<tuple[dict]>`: Table data filtered by columns.
         """
-        ...
 
     @overload
     def filter_columns(self, data: DataFrame, *columns: str) -> DataFrame:
@@ -2751,7 +2736,6 @@ class Table:
         :raise: `QueryDataError`
         :return `<DataFrame>`: Table data filtered by columns (original data type).
         """
-        ...
 
     def filter_columns(
         self,
@@ -4428,7 +4412,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: All sub-tables information.
         """
-        ...
 
     @overload
     async def information(
@@ -4479,7 +4462,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: All sub-tables information.
         """
-        ...
 
     @overload
     async def information(
@@ -4530,7 +4512,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: All sub-tables information.
         """
-        ...
 
     async def information(
         self,
@@ -4616,7 +4597,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Table description.
         """
-        ...
 
     @overload
     async def describe(
@@ -4633,7 +4613,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Table description.
         """
-        ...
 
     @overload
     async def describe(
@@ -4650,7 +4629,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Table description.
         """
-        ...
 
     async def describe(
         self,
@@ -4913,7 +4891,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Index information.
         """
-        ...
 
     @overload
     async def show_index(
@@ -4930,7 +4907,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Index information.
         """
-        ...
 
     @overload
     async def show_index(
@@ -4947,7 +4923,6 @@ class TimeTable(Table):
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Index information.
         """
-        ...
 
     async def show_index(
         self,
@@ -6523,7 +6498,6 @@ class Database:
                 warnings=True,
             )
         """
-        ...
 
     @overload
     async def fetch_query(
@@ -6584,7 +6558,6 @@ class Database:
                 warnings=True,
             )
         """
-        ...
 
     @overload
     async def fetch_query(
@@ -6645,7 +6618,6 @@ class Database:
                 warnings=True,
             )
         """
-        ...
 
     async def fetch_query(
         self,
@@ -6998,7 +6970,6 @@ class Database:
         :raise: Subclass of `QueryError`.
         :return `<tuple[dict]>`: Database information.
         """
-        ...
 
     @overload
     async def information(
@@ -7032,7 +7003,6 @@ class Database:
         :raise: Subclass of `QueryError`.
         :return `<DataFrame>`: Database information.
         """
-        ...
 
     @overload
     async def information(
@@ -7066,7 +7036,6 @@ class Database:
         :raise: Subclass of `QueryError`.
         :return `<tuple[tuple]>`: Database information.
         """
-        ...
 
     async def information(
         self,
