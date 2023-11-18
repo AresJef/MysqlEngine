@@ -16,26 +16,28 @@ jobs:
         arch: [auto]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions/setup-python@v4
-        name: Install Python
+      - name: Install Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - uses: docker/setup-qemu-action@v2
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
         if: ${{ matrix.arch == 'aarch64' }}
-        name: Set up QEMU
-      - name: Install cibuildwheel
+      - name: Install Build Tools
         run: |
           python -m pip install cibuildwheel==2.16.2 Cython==3.0.4
-      - name: Build wheels
+      - name: Build 'wheel'
         env:
           CIBW_ARCHS_MACOS: x86_64 universal2
           CIBW_ARCHS_LINUX: ${{matrix.arch}}
         run: |
           python -m cibuildwheel --output-dir wheelhouse
-      - uses: actions/upload-artifact@v3
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
           retention-days: 1
@@ -46,21 +48,23 @@ jobs:
     env:
       CIBW_SKIP: "cp27-* cp34-* pp27-* cp35-*"
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions/setup-python@v4
-        name: Install Python
+      - name: Install Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - name: Install build & updates
+      - name: Install Build Tools
         run: |
           python -m pip install -U pip setuptools
           python -m pip install build Cython==3.0.4
-      - name: Build sdist
+      - name: Build 'sdist'
         run: |
           python -m build --sdist --outdir dist
-      - uses: actions/upload-artifact@v3
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
           retention-days: 1
