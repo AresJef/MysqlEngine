@@ -19,6 +19,14 @@
 *.tar
 *.zip
 
+# Build #
+############
+*.egg-info
+*.tar.gz
+*.whl
+/build
+/dist
+
 # Logs and databases #
 ######################
 *.log
@@ -49,9 +57,3 @@ Thumbs.db
 # Html #
 ######################
 *.html
-
-# Build
-######################
-*.tar.gz
-*.whl
-*.egg-info
