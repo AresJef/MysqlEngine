@@ -3815,7 +3815,7 @@ class CursorManager:
     async def __aexit__(self, exc_type, exc, exc_tb) -> None:
         try:
             await self.close()
-        except Exception as err:
+        except BaseException as err:
             if exc is not None:
                 exc.add_note("-> <Curosr> Failed to close: %s." % err)
             else:
@@ -3897,13 +3897,9 @@ class TransactionManager(ConnectionManager):
             try:
                 await self._conn.rollback()
                 await self.close()
-            except Exception as err:
-                await self.close()
-                exc.add_note("-> <Connection> Failed to `ROLLBACK`: %s." % err)
             except BaseException as err:
                 await self.close()
-                err.add_note("-> <Connection> Failed to `ROLLBACK`.")
-                raise err
+                exc.add_note("-> <Connection> Failed to `ROLLBACK`: %s." % err)
         else:
             try:
                 await self._conn.commit()
@@ -4028,13 +4024,9 @@ class PoolTransactionManager(PoolConnectionManager):
             try:
                 await self._conn.rollback()
                 await self.close_release()
-            except Exception as err:
-                await self.close_release()
-                exc.add_note("-> <Pool> Connection failed to `ROLLBACK`: %s." % err)
             except BaseException as err:
                 await self.close_release()
-                err.add_note("-> <Pool> Connection failed to `ROLLBACK`.")
-                raise err
+                exc.add_note("-> <Pool> Connection failed to `ROLLBACK`: %s." % err)
         else:
             try:
                 await self._conn.commit()
