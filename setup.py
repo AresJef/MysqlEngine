@@ -7,64 +7,69 @@ __package__ = "mysqlengine"
 
 
 # Create Extension
-def extension(filename: str, include_np: bool, *extra_compile_args: str) -> Extension:
+def extension(src: str, include_np: bool, *extra_compile_args: str) -> Extension:
+    # Prep name
+    if "/" in src:
+        folders: list[str] = src.split("/")
+        file: str = folders.pop(-1)
+    else:
+        folders: list[str] = []
+        file: str = src
+    if "." in file:  # . remove extension
+        file = file.split(".")[0]
+    name = ".".join([__package__, *folders, file])
+
+    # Prep source
+    if "/" in src:
+        file = src.split("/")[-1]
+    else:
+        file = src
+    source = os.path.join("src", __package__, *folders, file)
+
     # Extra arguments
     extra_args = list(extra_compile_args) if extra_compile_args else None
-    # Name
-    name: str = "%s.%s" % (__package__, filename.split(".")[0])
-    source: str = os.path.join("src", __package__, filename)
+
     # Create extension
     if include_np:
         return Extension(
             name,
-            sources=[source],
+            [source],
             extra_compile_args=extra_args,
             include_dirs=[np.get_include()],
             define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
         )
     else:
-        return Extension(name, sources=[source], extra_compile_args=extra_args)
+        return Extension(name, [source], extra_compile_args=extra_args)
 
 
 # Build Extensions
-# fmt: off
 if platform.system() == "Windows":
     extensions = [
-        extension("charset.py", False),
-        extension("column.py", False),
-        extension("connection.py", False),
-        extension("constant.py", False),
+        extension("column.py", True),
+        extension("constraint.py", True),
         extension("database.py", True),
-        extension("dtype.py", True),
-        extension("engine.py", False),
-        extension("errors.py", False),
-        extension("index.py", False),
-        extension("protocol.py", False),
-        extension("query.py", True),
-        extension("regex.py", False),
-        extension("settings.py", False),
-        extension("transcode.py", True),
-        extension("utils.py", True),
+        extension("dml.py", True),
+        extension("element.py", True),
+        extension("index.py", True),
+        extension("partition.py", True),
+        extension("table.py", True),
+        extension("utils.py", False),
     ]
 else:
+    # fmt: off
     extensions = [
-        extension("charset.py", False, "-Wno-unreachable-code"),
-        extension("column.py", False, "-Wno-unreachable-code"),
-        extension("connection.py", False, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("column.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("constraint.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
         extension("database.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
-        extension("constant.py", False, "-Wno-unreachable-code"),
-        extension("dtype.py", True, "-Wno-unreachable-code"),
-        extension("engine.py", False, "-Wno-unreachable-code"),
-        extension("errors.py", False, "-Wno-unreachable-code"),
-        extension("index.py", False, "-Wno-unreachable-code"),
-        extension("protocol.py", False, "-Wno-unreachable-code"),
-        extension("query.py", True, "-Wno-unreachable-code"),
-        extension("regex.py", False, "-Wno-unreachable-code"),
-        extension("settings.py", False, "-Wno-unreachable-code"),
-        extension("transcode.py", True, "-Wno-unreachable-code"),
-        extension("utils.py", True, "-Wno-unreachable-code"),
+        extension("dml.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("element.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("index.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("partition.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("table.py", True, "-Wno-unreachable-code", "-Wno-incompatible-pointer-types"),
+        extension("utils.py", False, "-Wno-unreachable-code"),
     ]
-# fmt: on
+    # fmt: on
+
 
 # Build
 setup(

@@ -1,70 +1,71 @@
 # cython: language_level=3
-
-from cpython.set cimport PySet_Add as set_add
-from mysqlengine.column cimport Columns
-
-# Utils
-cdef inline str access_index_name(Index idx) noexcept:
-    return idx._name
-
-cdef inline object get_index_name(object idx) noexcept:
-    if isinstance(idx, Index):
-        return access_index_name(idx)
-    else:
-        return idx
-
-cdef inline set get_indexes_names(tuple indexes) noexcept:
-    names: set = set()
-    for idx in indexes:
-        set_add(names, get_index_name(idx))
-    return names
-
-cdef inline str access_index_syntax(Index idx) noexcept:
-    return idx._syntax
+from mysqlengine.element cimport Element, Elements, Logs, Metadata, Query
 
 # Index
-cdef class Index:
-    # Attributes
+cdef class Index(Element):
     cdef:
-        str _name, _name_lower, _syntax
-        bint _unique, _primary_unique
-        Columns _columns
-    # Search
-    cdef list _search_by_name(self, str name, bint exact) noexcept
-    cdef list _search_by_mysql_dtype(self, str dtype, bint exact) noexcept
-    cdef list _search_by_python_dtype(self, tuple dtypes) noexcept
-    # Filter
-    cdef bint _issubset(self, tuple columns) noexcept
+        # Common
+        tuple _columns
+        str _index_type
+        str _comment
+        bint _visible
+        # FullText Index
+        str _parser
+    # Sync
+    cpdef Logs Initialize(self, bint force=?)
+    cpdef Logs Add(self)
+    cpdef bint Exists(self) except -1
+    cpdef Logs Drop(self)
+    cpdef Logs _Alter(self, object columns, object index_type, object parser, object comment, object visible)
+    cpdef Logs SetVisible(self, bint visible)
+    cpdef IndexMetadata ShowMetadata(self)
+    cpdef tuple ShowIndexNames(self)
+    cpdef Logs SyncFromRemote(self)
+    cpdef Logs SyncToRemote(self)
+    # Generate SQL
+    cpdef str _gen_definition_sql(self)
+    cpdef str _gen_add_sql(self)
+    cpdef str _gen_exists_sql(self)
+    cpdef str _gen_drop_sql(self)
+    cpdef Query _gen_alter_query(self, IndexMetadata meta, object columns, object index_type, object parser, object comment, object visible)
+    cpdef str _gen_set_visible_sql(self, bint visible)
+    cpdef str _gen_show_metadata_sql(self)
+    cpdef str _gen_show_index_names_sql(self)
+    # Metadata
+    cpdef Logs _sync_from_metadata(self, IndexMetadata meta, Logs logs=?)
+    cpdef int _diff_from_metadata(self, IndexMetadata meta) except -1
+    # Setter
+    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    # Copy
+    cpdef Index copy(self)
+    cpdef Index _construct(self, object columns, object index_type, object parser, object comment, object visible)
 
-# Indexes
-cdef class Indexes:
-    # Attributes
+cdef class FullTextIndex(Index):
     cdef:
-        dict _dict
-        tuple _names, _instances, _items
-        set _names_set
-        int _length
-    # Search
-    cdef list _search_by_name(self, str name, bint exact) noexcept
-    cdef list _search_by_columns(self, tuple columns, bint match_all) noexcept
-    # Filter
-    cdef bint _issubset(self, tuple indexes) noexcept
-    cdef list _filter(self, tuple indexes) noexcept
-    # Accessors
-    cdef object _get(self, object idx, object default) noexcept
-    # Special Methods
-    cdef Index _getitem(self, object idx) except *
-    cdef bint _contains(self, object idx) noexcept
+        object _parser_regex
+    # Validator
+    cdef inline str _validate_parser(self, object parser)
 
-cdef class UniqueIndexes(Indexes):
-    # Attributes
-    cdef:
-        Index _primary
+# Indexex
+cdef class Indexes(Elements):
+    # Setter
+    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    # Copy
+    cpdef Indexes copy(self)
 
-cdef class TableIndexes(Indexes):
-    # Attribtues
+# Metadata
+cdef class IndexMetadata(Metadata):
     cdef:
-        UniqueIndexes _uniques
-        str _syntax
-    # Syntax
-    cdef str _gen_syntax(self, tuple columns) noexcept
+        # Base data
+        str _db_name
+        str _tb_name
+        str _index_name
+        str _index_type
+        bint _unique
+        str _comment
+        bint _visible
+        # Additional data
+        str _el_type
+        tuple _columns
+        # FullText Index
+        str _parser

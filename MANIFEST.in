@@ -1,6 +1,7 @@
 include LICENSE
 include README.md
 
-include src/mysqlengine/*.pxd
-include src/mysqlengine/*.py
-include src/mysqlengine/*.pyx
+include src/cytimes/*.pxd
+include src/cytimes/*.py
+include src/cytimes/*.pyi
+include src/cytimes/*.pyx
