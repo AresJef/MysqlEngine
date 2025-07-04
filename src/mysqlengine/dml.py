@@ -2559,6 +2559,20 @@ class DML:
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
             Determines the data type of the fetched result set.
             Also accepts:
@@ -2624,6 +2638,20 @@ class DML:
         """(internal) [async] Execute the DML statement.
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
             Determines the data type of the fetched result set.
@@ -4317,6 +4345,20 @@ class SelectDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
             Determines the data type of the fetched result set.
             Also accepts:
@@ -4385,6 +4427,20 @@ class SelectDML(DML):
         """[async] Execute the SELECT statement, and fetch all the results.
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
             Determines the data type of the fetched result set.
@@ -5526,6 +5582,20 @@ class InsertDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -5578,6 +5648,20 @@ class InsertDML(DML):
         """[async] Execute the INSERT statement, and returns the affected rows `<'int'>`
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
@@ -6582,6 +6666,20 @@ class ReplaceDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -6634,6 +6732,20 @@ class ReplaceDML(DML):
         """[async] Execute the REPLACE statement, and returns the affected rows `<'int'>`
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
@@ -7283,6 +7395,20 @@ class UpdateDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -7353,6 +7479,20 @@ class UpdateDML(DML):
         """[async] Execute the UPDATE statement, and returns the affected rows `<'int'>`
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
@@ -7989,6 +8129,20 @@ class DeleteDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
 
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -8049,6 +8203,20 @@ class DeleteDML(DML):
         """[async] Execute the DELETE statement, and returns the affected rows `<'int'>`
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments (data) for the placeholders in the statement. Defaults to `None`.
+
+            Supports:
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
 
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
