@@ -2559,8 +2559,8 @@ class DML:
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
-        :param cursor `<'type[Cursor]/None'>`: The cursor type (class) to use. Defaults to `None` (use pool default).
-            Determines the data type of the fetched result set after executing the statement.
+        :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
+            Determines the data type of the fetched result set.
             Also accepts:
             1. `tuple` => `Cursor`;
             2. `dict` => `DictCursor`;
@@ -2619,13 +2619,14 @@ class DML:
         fetch: cython.bint = True,
         many: cython.bint = False,
         conn: object | None = None,
+        batch: cython.bint = False,
     ) -> object:
         """(internal) [async] Execute the DML statement.
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
-        :param cursor `<'type[Cursor]/None'>`: The cursor type (class) to use. Defaults to `None` (use pool default).
-            Determines the data type of the fetched result set after executing the statement.
+        :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
+            Determines the data type of the fetched result set.
             Also accepts:
             1. `tuple` => `Cursor`;
             2. `dict` => `DictCursor`;
@@ -2641,6 +2642,9 @@ class DML:
         :param conn `<'PoolConnection/None'>`: The specific [async] connection to execute the statement. Defaults to `None`.
             If 'conn=None', the statement will be executed by a (random) connection
             from the pool, and commit automatically after the statement execution.
+
+        :param batch `<'bool'>`: Whether to execute the INSERT/REPLACE statement in batch mode. Defaults to `False`.
+            Should only be `True` for INSERT/REPLACE ... VALUES ... statements.
 
         :returns `<'tuple[tuple]/tuple[dict]/DataFrame/int'>`: The result set of the statement.
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
@@ -2670,8 +2674,8 @@ class DML:
             )
 
         # Connection from pool
-        # . no arguments / single-row
-        if args is None or not many:
+        # . no arguments / single-row / batch-insert
+        if args is None or not many or batch:
             async with self._pool.acquire() as conn:
                 if self._multi_table:
                     await conn.select_database(self._db_name)
@@ -4313,8 +4317,8 @@ class SelectDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
-        :param cursor `<'type[Cursor]/None'>`: The cursor type (class) to use. Defaults to `None` (use pool default).
-            Determines the data type of the fetched result set after executing the statement.
+        :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
+            Determines the data type of the fetched result set.
             Also accepts:
             1. `tuple` => `Cursor`;
             2. `dict` => `DictCursor`;
@@ -4382,8 +4386,8 @@ class SelectDML(DML):
 
         :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
 
-        :param cursor `<'type[Cursor]/None'>`: The cursor type (class) to use. Defaults to `None` (use pool default).
-            Determines the data type of the fetched result set after executing the statement.
+        :param cursor `<'type[Cursor]/None'>`: The cursor class (type) to use. Defaults to `None` (use pool default).
+            Determines the data type of the fetched result set.
             Also accepts:
             1. `tuple` => `Cursor`;
             2. `dict` => `DictCursor`;
@@ -4437,7 +4441,7 @@ class SelectDML(DML):
             UPDATE ...;
             COMMIT;
         """
-        return await self._aioExecute(args, cursor, fetch, False, conn)
+        return await self._aioExecute(args, cursor, fetch, False, conn, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -5616,7 +5620,8 @@ class InsertDML(DML):
             INSERT INTO db.tb VALUES (...);
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn)
+        batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
+        return await self._aioExecute(args, None, False, many, conn, batch)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -6671,7 +6676,8 @@ class ReplaceDML(DML):
             REPLACE INTO db.tb VALUES (...);
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn)
+        batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
+        return await self._aioExecute(args, None, False, many, conn, batch)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -7407,7 +7413,7 @@ class UpdateDML(DML):
             WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn)
+        return await self._aioExecute(args, None, False, many, conn, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -8093,7 +8099,7 @@ class DeleteDML(DML):
             DELETE FROM db.tb AS t0 WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn)
+        return await self._aioExecute(args, None, False, many, conn, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
