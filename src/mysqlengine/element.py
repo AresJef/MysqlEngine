@@ -136,19 +136,16 @@ class Element(ObjStr):
     # Acquire / Transaction / Fill / Release -----------------------------------------------
     @cython.ccall
     def acquire(self) -> PoolConnectionManager:
-        """Acquire a free connection from the connection pool
-        through context manager `<'PoolConnectionManager'>`.
+        """Acquire a free connection from the pool through context manager `<'PoolConnectionManager'>`.
 
         ## Notice
-        - On acquisition, the following session settings are reset to the pool's defaults:
-          'autocommit', 'used_decimal', 'decode_bit', 'decode_json'.
-        - If you use any `set_*()` methods to change charset or timeouts
-          (read_timeout, write_timeout, wait_timeout, interactive_timeout,
-          lock_wait_timeout, execution_timeout), those will be reverted to
-          pool defaults on release.
-        - Any other session-level changes (e.g. via SQL statements) will break
-          the pool connections consistency. Please call `conn.schedule_close()`
-          before releasing the connection back to the pool.
+        - **On Acquisition**: The following session settings are reset to the pool's defaults:
+          `autocommit`, `used_decimal`, `decode_bit`, `decode_json`.
+        - **At Release**: Any changes made vis `set_*()` methods (e.g. `set_charset()`,
+          `set_read_timeout()`, etc.) will be reverted back to the pool defaults.
+        - **Consistency**: Any other session-level changes (e.g. via SQL statements) will
+          break the pool connection consistency. Please call `Connection.schedule_close()`
+          before exiting the context.
 
         ## Example (sync):
         >>> with element.acquire() as conn:
@@ -164,38 +161,30 @@ class Element(ObjStr):
 
     @cython.ccall
     def transaction(self) -> PoolTransactionManager:
-        """Acquire a free connection from the connection pool in
-        `TRANSACTION` mode through context manager `<'PoolTransactionManager'>`.
+        """Acquire a free connection from the pool in TRANSACTION mode
+        through context manager `<'PoolTransactionManager'>`.
 
-        ## Explanation
-        By acquiring connection through this method, the following happens:
+        ## On enter
         - 1. Acquire a free connection from the pool.
-        - 2. Use the connection to `START` a transaction.
-        - 3. Returns the connection to the user.
-        - 4a. If the transaction executed successfully, execute `COMMIT`
-              and release the connection back to the pool.
-        - 4b. If catches ANY exceptions during the transaction, close
-              the connection when release back to the pool.
+        - 2. Calls `BEGIN` on the connection
+
+        ## On exit
+        - If no exception occurs: calls `COMMIT` and releases the connection back to the pool for reuse.
+        - If an exception occurs: Schedules the connection for closure and releases it back to the pool.
 
         ## Notice
-        - On acquisition, the following session settings are reset to the pool's defaults:
-          'autocommit', 'used_decimal', 'decode_bit', 'decode_json'.
-        - If you use any `set_*()` methods to change charset or timeouts
-          (read_timeout, write_timeout, wait_timeout, interactive_timeout,
-          lock_wait_timeout, execution_timeout), those will be reverted to
-          pool defaults on release.
-        - Any other session-level changes (e.g. via SQL statements) will break
-          the pool connections consistency. Please call `conn.schedule_close()`
-          before releasing the connection back to the pool.
+        - **On Acquisition**: The following session settings are reset to the pool's defaults:
+          `autocommit`, `used_decimal`, `decode_bit`, `decode_json`.
+        - **At Release**: Any changes made vis `set_*()` methods (e.g. `set_charset()`,
+          `set_read_timeout()`, etc.) will be reverted back to the pool defaults.
+        - **Consistency**: Any other session-level changes (e.g. via SQL statements) will
+          break the pool connection consistency. Please call `Connection.schedule_close()`
+          before exiting the context.
 
         ## Example (sync):
         >>> with element.transaction() as conn:
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO tb (id, name) VALUES (1, 'test')")
-            # Equivalent to:
-            BEGIN;
-            INSERT INTO tb (id, name) VALUES (1, 'test');
-            COMMIT;
 
         ## Example (async):
         >>> async with element.transaction() as conn:
@@ -209,36 +198,39 @@ class Element(ObjStr):
         return self._pool.transaction()
 
     async def fill(self, num: int = 1) -> None:
-        """Fill the pool with new asynchronous connections.
+        """Fill the pool with new [async] connections.
 
         :param num `<'int'>`: Number of new [async] connections to create. Defaults to `1`.
-            - If 'num' plus the existing [async] connections in the pool exceeds the
-              maximum pool size, pool is only filled up to the 'max_size' limit.
-            - If 'num=-1', the pool is filled up to the 'min_size' limit.
+
+            - If 'num' plus the total [async] connections in the pool exceeds the
+              maximum pool size, only fills up to the `Pool.max_size` limit.
+            - If 'num=-1', fills up to the `Pool.min_size` limit.
         """
         return await self._pool.fill(num)
 
     @cython.ccall
     def release(self, conn: PoolConnection | PoolSyncConnection) -> object:
-        """Release a connection back to the pool `<'Future'>`.
+        """Release a connection back to the pool `<'Task[None]'>`.
 
-        Use this method only when you acquire a connection manually. Connections
-        obtained via 'acquire()' or 'transaction()' are released automatically
-        by their context managers.
+        - Use this method `ONLY` when you directly acquired a connection without the context manager.
+        - Connections obtained via context manager are released automatically on exits.
 
         :param conn `<'PoolConnection/PoolSyncConnection'>`: The pool [sync/async] connection to release.
-        :raises `<'PoolReleaseError'>`: If the connection does not belong to the connection pool.
 
-        ## Notice
-        - On acquisition, the following session settings are reset to the pool's defaults:
-          'autocommit', 'used_decimal', 'decode_bit', 'decode_json'.
-        - If you use any `set_*()` methods to change charset or timeouts
-          (read_timeout, write_timeout, wait_timeout, interactive_timeout,
-          lock_wait_timeout, execution_timeout), those will be reverted to
-          pool defaults on release.
-        - Any other session-level changes (e.g. via SQL statements) will break
-          the pool connections consistency. Please call `conn.schedule_close()`
-          before calling the 'release()' method.
+        :returns `<'Task[None]'>`: An `asyncio.Task` that resolves once the connection is released.
+
+            - For a [sync] connection, the returned `Task` can be ignored,
+              as the connection is released immediately.
+            - For an [async] connection, the returned `Task` must be awaited
+              to ensure the connection is properly handled.
+
+        :raises `<'PoolReleaseError'>`: If the connection does not belong to the pool.
+
+        ## Example (sync):
+        >>> element.release(sync_conn)  # immediate release
+
+        ## Example (async):
+        >>> await element.release(async_conn)  # 'await' for release
         """
         return self._pool.release(conn)
 
@@ -974,18 +966,38 @@ class Element(ObjStr):
     # Utils --------------------------------------------------------------------------------
     @cython.cfunc
     @cython.inline(True)
-    def _escape_args(self, args: object | None, itemize: cython.bint = True) -> object:
-        """(internal) Escape the arguments `<'str/tuple/list'>`.
+    def _escape_args(self, args: object, itemize: cython.bint = True) -> object:
+        """(internal) Prepare and escape arguments for SQL binding `<'str/tuple/list[str/tuple]'>`.
 
-        :param args `<'list/tuple/DataFrame/Any'>`: The arguments to escape.
-        :param itemize `<'bool'>`: Whether to escape each items of the 'args' individually. Defaults to True.
-            - **'itemize=True'**: the 'args' type determines how to escape.
-                * 1. Sequence or Mapping (e.g. list, tuple, dict, etc) escapes to <'tuple[str]'>.
-                * 2. pd.Series and 1-dimensional np.ndarray escapes to <'tuple[str]'>.
-                * 3. pd.DataFrame and 2-dimensional np.ndarray escapes to <'list[tuple[str]]'>.
-                  Each tuple represents one row of the 'args' .
-                * 4. Single object (such as int, float, str, etc) escapes to one literal string <'str'>.
-            - **'itemize=False'**: regardless of the 'args' type, all escapes to one single literal string <'str'>.
+        :param args `<'Any'>`: Arguments to escape, supports:
+
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
+        :param itemize `<'bool'>`: Whether to escape items of the 'args' individually. Defaults to `True`.
+        - `itemize=False`: Always escapes to one single literal string `<'str'>`, regardless of the 'args' type.
+        - `itemize=True`: The 'args' data type determines how escape is done.
+            - 1. Sequence or Mapping (e.g. `list`, `tuple`, `dict`, etc) escapes to `<'tuple[str]'>`.
+            - 2. `pd.Series` and 1-dimensional `np.ndarray` escapes to `<'tuple[str]'>`.
+            - 3. `pd.DataFrame` and 2-dimensional `np.ndarray` escapes to `<'list[tuple[str]]'>`.
+            - 4. Single object (such as `int`, `float`, `str`, etc) escapes to one literal string `<'str'>`.
+
+        :returns `<'str/tuple/list'>`:
+        - If returns `<'str'>`, it represents a single literal string.
+        - If returns `<'tuple'>`, it represents a single row of literal strings.
+        - If returns `<'list'>`, it represents multiple rows of literal strings.
+
+        :raises `<'EscapeTypeError'>`: If escape fails due to unsupported type.
         """
         return _escape(args, False, itemize)
 
@@ -994,21 +1006,37 @@ class Element(ObjStr):
     def _format_sql(
         self,
         sql: str,
-        args: object | None,
+        args: object,
         itemize: cython.bint = True,
     ) -> str:
         """(internal) Format the SQL with the given arguments `<'str'>`.
 
         :param sql `<'str'>`: The SQL statement to format.
-        :param args `<'list/tuple/DataFrame/Any'>`: The arguments to escape and incorporate into the SQL statement.
-        :param itemize `<'bool'>`: Whether to escape each items of the 'args' individually. Defaults to True.
-            - **'itemize=True'**: the 'args' type determines how to escape.
-                * 1. Sequence or Mapping (e.g. list, tuple, dict, etc) escapes to <'tuple[str]'>.
-                * 2. pd.Series and 1-dimensional np.ndarray escapes to <'tuple[str]'>.
-                * 3. pd.DataFrame and 2-dimensional np.ndarray escapes to <'list[tuple[str]]'>.
-                  Each tuple represents one row of the 'args' .
-                * 4. Single object (such as int, float, str, etc) escapes to one literal string <'str'>.
-            - **'itemize=False'**: regardless of the 'args' type, all escapes to one single literal string <'str'>.
+        
+        :param args `<'Any'>`: Arguments to escape, supports:
+
+            - **Python built-ins**:
+                int, float, bool, str, None, datetime, date, time,
+                timedelta, struct_time, bytes, bytearray, memoryview,
+                Decimal, dict, list, tuple, set, frozenset, range
+            - **Library [numpy](https://github.com/numpy/numpy)**:
+                np.int, np.uint, np.float, np.bool, np.bytes,
+                np.str, np.datetime64, np.timedelta64, np.ndarray
+            - **Library [pandas](https://github.com/pandas-dev/pandas)**:
+                pd.Timestamp, pd.Timedelta, pd.DatetimeIndex,
+                pd.TimedeltaIndex, pd.Series, pd.DataFrame
+            - **Library [cytimes](https://github.com/AresJef/cyTimes)**:
+                cytimes.Pydt, cytimes.Pddt
+
+        :param itemize `<'bool'>`: Whether to escape items of the 'args' individually. Defaults to `True`.
+        - `itemize=False`: Always escapes to one single literal string `<'str'>`, regardless of the 'args' type.
+        - `itemize=True`: The 'args' data type determines how escape is done.
+            - 1. Sequence or Mapping (e.g. `list`, `tuple`, `dict`, etc) escapes to `<'tuple[str]'>`.
+            - 2. `pd.Series` and 1-dimensional `np.ndarray` escapes to `<'tuple[str]'>`.
+            - 3. `pd.DataFrame` and 2-dimensional `np.ndarray` escapes to `<'list[tuple[str]]'>`.
+            - 4. Single object (such as `int`, `float`, `str`, etc) escapes to one literal string `<'str'>`.
+
+        :returns `<'str'>`: The SQL statement formatted with escaped arguments.
         """
         if args is None:
             return sql  # exit
