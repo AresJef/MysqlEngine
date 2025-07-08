@@ -20,10 +20,7 @@ def extension(src: str, include_np: bool, *extra_compile_args: str) -> Extension
     name = ".".join([__package__, *folders, file])
 
     # Prep source
-    if "/" in src:
-        file = src.split("/")[-1]
-    else:
-        file = src
+    file = src.split("/")[-1] if "/" in src else src
     source = os.path.join("src", __package__, *folders, file)
 
     # Extra arguments
