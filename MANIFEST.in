@@ -1,7 +1,4 @@
 include LICENSE
 include README.md
 
-include src/*.pxd
-include src/*.py
-include src/*.pyi
-include src/*.pyx
+recursive-include src/mysqlengine *.py *.pxd *.pyx *.pyi
