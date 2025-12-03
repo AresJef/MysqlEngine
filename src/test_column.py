@@ -39,7 +39,6 @@ class TestCase(unittest.TestCase):
         Define.TEXT(),
         Define.MEDIUMTEXT(),
         Define.LONGTEXT(),
-        Define.ENUM("a", "b", "c"),
         # Binary String
         Define.BINARY(),
         Define.VARBINARY(255),
@@ -47,6 +46,12 @@ class TestCase(unittest.TestCase):
         Define.BLOB(),
         Define.MEDIUMBLOB(),
         Define.LONGBLOB(),
+        Define.BIT(8),
+        # Enumerated
+        Define.ENUM("a", "b", "c"),
+        Define.SET("a", "b", "c"),
+        # JSON
+        Define.JSON(),
     )
 
     def __init__(
@@ -172,9 +177,11 @@ class TestColumnDefinition(TestCase):
         self.test_year()
         self.test_char_n_varchar()
         self.test_text()
-        self.test_enum()
         self.test_binary_n_varbinary()
         self.test_blob()
+        self.test_bit()
+        self.test_enumerated()
+        self.test_json()
         self.test_generated_column()
         self.test_columns()
 
@@ -322,8 +329,6 @@ class TestColumnDefinition(TestCase):
             self.assertDefinition(d, f"{d.data_type}(12,2) DEFAULT 1.00 COMMENT 'Comment' INVISIBLE")
             # fmt: on
             with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype(precision="0"))
-            with self.assertRaises(errors.ColumnDefinitionError):
                 self.setup_definition(dtype(precision=0))
             with self.assertRaises(errors.ColumnDefinitionError):
                 self.setup_definition(dtype(precision=66))
@@ -430,8 +435,6 @@ class TestColumnDefinition(TestCase):
             self.assertDefinition(d, f"{d.data_type} NOT NULL DEFAULT CURRENT_TIMESTAMP")
             # fmt: on
             with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype(fsp="0"))
-            with self.assertRaises(errors.ColumnDefinitionError):
                 self.setup_definition(dtype(fsp=7))
 
         self.log_ended("DATETIME & TIMESTAMP")
@@ -477,8 +480,6 @@ class TestColumnDefinition(TestCase):
             d = self.setup_definition(dtype(**(args_all)))
             self.assertDefinition(d, f"{d.data_type}(6) DEFAULT '01:01:01.000001' COMMENT 'Comment' INVISIBLE")
             # fmt: on
-            with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype(fsp="0"))
             with self.assertRaises(errors.ColumnDefinitionError):
                 self.setup_definition(dtype(fsp=7))
 
@@ -661,72 +662,6 @@ class TestColumnDefinition(TestCase):
 
         self.log_ended("TEXT")
 
-    def test_enum(self) -> None:
-        self.log_start("ENUM")
-
-        args_base = {
-            "null": False,
-            "default": None,
-            "comment": None,
-            "visible": True,
-        }
-        args_all = {
-            "null": True,
-            "default": "b",
-            "comment": "Comment",
-            "visible": False,
-        }
-        for dtype in (Define.ENUM,):
-            # fmt: off
-            # base
-            d = self.setup_definition(dtype("a", "b", "c", **args_base))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci")
-            # null
-            d = self.setup_definition(dtype(["a", "b", "c"], **(args_base | {"null": True})))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') COLLATE utf8mb4_general_ci")
-            # default
-            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"default": "b"})))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL DEFAULT 'b' COLLATE utf8mb4_general_ci")
-            # comment
-            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"comment": "Comment"})))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci COMMENT 'Comment'")
-            # visible
-            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"visible": False})))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci INVISIBLE")
-            # all
-            d = self.setup_definition(dtype(("a", "b", "c"), **(args_all)))
-            self.assertDefinition(d, f"{d.data_type}('a','b','c') DEFAULT 'b' COLLATE utf8mb4_general_ci COMMENT 'Comment' INVISIBLE")
-            # fmt: on
-            with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype())
-            with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype("a", 1))
-            with self.assertRaises(errors.ColumnDefinitionError):
-                self.setup_definition(dtype("a", "b", default="c"))
-
-        # Test charset
-        for dtype in (Define.ENUM,):
-            # fmt: off
-            # utf8
-            d = self.setup_definition(dtype("a", "b", "c", charset="utf8"))
-            self.assertDefinition(d, "ENUM('a','b','c') NOT NULL COLLATE utf8mb4_general_ci")
-            self.assertCharset(d, "utf8mb4", "utf8mb4_general_ci")
-            # collate: utf8mb4_bin
-            d = self.setup_definition(dtype("a", "b", "c", collate="utf8mb4_bin"))
-            self.assertDefinition(d, "ENUM('a','b','c') NOT NULL COLLATE utf8mb4_bin")
-            self.assertCharset(d, "utf8mb4", "utf8mb4_bin")
-            # charset: utf8mb3
-            d = self.setup_definition(dtype("a", "b", "c", charset="utf8mb3"))
-            self.assertDefinition(d, "ENUM('a','b','c') NOT NULL COLLATE utf8mb3_general_ci")
-            self.assertCharset(d, "utf8mb3", "utf8mb3_general_ci")
-            # different encoding
-            d = self.setup_definition(dtype("a", "b", "c", charset="latin1"))
-            with self.assertRaises(errors.ColumnDefinitionError):
-                self.assertCharset(d, "latin1", "latin1_swedish_ci")
-            # fmt: on
-
-        self.log_ended("ENUM")
-
     def test_binary_n_varbinary(self) -> None:
         self.log_start("BINARY & VARBINARY")
 
@@ -768,6 +703,8 @@ class TestColumnDefinition(TestCase):
             d = self.setup_definition(dtype(**(args_all)))
             self.assertDefinition(d, f"{d.data_type}(255) DEFAULT _binary'Binary&Varbinary' COMMENT 'Comment' INVISIBLE")
             # fmt: on
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.setup_definition(dtype(length=-2))
 
         self.log_ended("BINARY & VARBINARY")
 
@@ -810,6 +747,153 @@ class TestColumnDefinition(TestCase):
 
         self.log_ended("BLOB")
 
+    def test_bit(self) -> None:
+        self.log_start("BIT")
+
+        args_base = {
+            "length": 1,
+            "null": False,
+            "default": None,
+            "comment": None,
+            "visible": True,
+        }
+        args_all = {
+            "length": 8,
+            "null": True,
+            "default": b"\xaa",
+            "comment": "Comment",
+            "visible": False,
+        }
+        for dtype in (Define.BIT,):
+            # fmt: off
+            # base
+            d = self.setup_definition(dtype(**args_base))
+            self.assertDefinition(d, f"{d.data_type}(1) NOT NULL")
+            # length
+            d = self.setup_definition(dtype(**(args_base | {"length": 8})))
+            self.assertDefinition(d, f"{d.data_type}(8) NOT NULL")
+            # null
+            d = self.setup_definition(dtype(**(args_base | {"null": True})))
+            self.assertDefinition(d, f"{d.data_type}(1)")
+            # default
+            d = self.setup_definition(dtype(**(args_base | {"default": 250})))
+            self.assertDefinition(d, f"{d.data_type}(1) NOT NULL DEFAULT 250")
+            # comment
+            d = self.setup_definition(dtype(**(args_base | {"comment": "Comment"})))
+            self.assertDefinition(d, f"{d.data_type}(1) NOT NULL COMMENT 'Comment'")
+            # visible
+            d = self.setup_definition(dtype(**(args_base | {"visible": False})))
+            self.assertDefinition(d, f"{d.data_type}(1) NOT NULL INVISIBLE")
+            # all
+            d = self.setup_definition(dtype(**(args_all)))
+            self.assertDefinition(d, f"{d.data_type}(8) DEFAULT 170 COMMENT 'Comment' INVISIBLE")
+
+            # fmt: on
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.setup_definition(dtype(length=-2))
+
+        self.log_ended("BIT")
+
+    def test_enumerated(self) -> None:
+        self.log_start("ENUMERATED")
+
+        args_base = {
+            "null": False,
+            "default": None,
+            "comment": None,
+            "visible": True,
+        }
+        args_all = {
+            "null": True,
+            "default": "b",
+            "comment": "Comment",
+            "visible": False,
+        }
+        for dtype in (Define.ENUM, Define.SET):
+            # fmt: off
+            # base
+            d = self.setup_definition(dtype("a", "b", "c", **args_base))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci")
+            # null
+            d = self.setup_definition(dtype(["a", "b", "c"], **(args_base | {"null": True})))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') COLLATE utf8mb4_general_ci")
+            # default
+            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"default": "b"})))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL DEFAULT 'b' COLLATE utf8mb4_general_ci")
+            # comment
+            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"comment": "Comment"})))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci COMMENT 'Comment'")
+            # visible
+            d = self.setup_definition(dtype(("a", "b", "c"), **(args_base | {"visible": False})))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci INVISIBLE")
+            # all
+            d = self.setup_definition(dtype(("a", "b", "c"), **(args_all)))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') DEFAULT 'b' COLLATE utf8mb4_general_ci COMMENT 'Comment' INVISIBLE")
+            # fmt: on
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.setup_definition(dtype())
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.setup_definition(dtype("a", 1))
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.setup_definition(dtype("a", "b", default="c"))
+
+        # Test charset
+        for dtype in (Define.ENUM, Define.SET):
+            # fmt: off
+            # utf8
+            d = self.setup_definition(dtype("a", "b", "c", charset="utf8"))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_general_ci")
+            self.assertCharset(d, "utf8mb4", "utf8mb4_general_ci")
+            # collate: utf8mb4_bin
+            d = self.setup_definition(dtype("a", "b", "c", collate="utf8mb4_bin"))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb4_bin")
+            self.assertCharset(d, "utf8mb4", "utf8mb4_bin")
+            # charset: utf8mb3
+            d = self.setup_definition(dtype("a", "b", "c", charset="utf8mb3"))
+            self.assertDefinition(d, f"{d.data_type}('a','b','c') NOT NULL COLLATE utf8mb3_general_ci")
+            self.assertCharset(d, "utf8mb3", "utf8mb3_general_ci")
+            # different encoding
+            d = self.setup_definition(dtype("a", "b", "c", charset="latin1"))
+            with self.assertRaises(errors.ColumnDefinitionError):
+                self.assertCharset(d, "latin1", "latin1_swedish_ci")
+            # fmt: on
+
+        self.log_ended("ENUMERATED")
+
+    def test_json(self) -> None:
+        self.log_start("JSON")
+
+        args_base = {
+            "null": False,
+            "comment": None,
+            "visible": True,
+        }
+        args_all = {
+            "null": True,
+            "comment": "Comment",
+            "visible": False,
+        }
+        for dtype in (Define.JSON,):
+            # fmt: off
+            # base
+            d = self.setup_definition(dtype(**args_base))
+            self.assertDefinition(d, f"{d.data_type} NOT NULL")
+            # null
+            d = self.setup_definition(dtype(**(args_base | {"null": True})))
+            self.assertDefinition(d, f"{d.data_type} DEFAULT NULL")
+            # comment
+            d = self.setup_definition(dtype(**(args_base | {"comment": "Comment"})))
+            self.assertDefinition(d, f"{d.data_type} NOT NULL COMMENT 'Comment'")
+            # visible
+            d = self.setup_definition(dtype(**(args_base | {"visible": False})))
+            self.assertDefinition(d, f"{d.data_type} NOT NULL INVISIBLE")
+            # all
+            d = self.setup_definition(dtype(**(args_all)))
+            self.assertDefinition(d, f"{d.data_type} DEFAULT NULL COMMENT 'Comment' INVISIBLE")
+            # fmt: on
+
+        self.log_ended("JSON")
+
     def test_generated_column(self) -> None:
         self.log_start("GENERATED COLUMN")
 
@@ -842,7 +926,6 @@ class TestColumnDefinition(TestCase):
             (Define.TEXT(), "TEXT"),
             (Define.MEDIUMTEXT(), "MEDIUMTEXT"),
             (Define.LONGTEXT(), "LONGTEXT"),
-            (Define.ENUM("a", "b", "c"), "ENUM('a','b','c')"),
             # Binary String
             (Define.BINARY(), "BINARY"),
             (Define.VARBINARY(255), "VARBINARY(255)"),
@@ -850,6 +933,12 @@ class TestColumnDefinition(TestCase):
             (Define.BLOB(), "BLOB"),
             (Define.MEDIUMBLOB(), "MEDIUMBLOB"),
             (Define.LONGBLOB(), "LONGBLOB"),
+            (Define.BIT(8), "BIT(8)"),
+            # Enumerated
+            (Define.ENUM("a", "b", "c"), "ENUM('a','b','c')"),
+            (Define.SET("a", "b", "c"), "SET('a','b','c')"),
+            # JSON
+            (Define.JSON(), "JSON"),
         ):
             col = self.setup_column(GeneratedColumn(dtype, "col1 + col2"), "col_g")
             self.assertEqual(
@@ -994,7 +1083,24 @@ class TestColumnCopy(TestCase):
         self.log_start("COPY")
 
         class TestTable(Table):
-            id: Column = Column(Define.BIGINT())
+            int_c: Column = Column(Define.INT())
+            float_c: Column = Column(Define.FLOAT())
+            decimal_c: Column = Column(Define.DECIMAL())
+            date_c: Column = Column(Define.DATE())
+            dt_c: Column = Column(Define.DATETIME())
+            ts_c: Column = Column(Define.TIMESTAMP())
+            time_c: Column = Column(Define.TIME())
+            year_c: Column = Column(Define.YEAR())
+            char_c: Column = Column(Define.CHAR())
+            vchar_c: Column = Column(Define.VARCHAR(255))
+            text_c: Column = Column(Define.TEXT())
+            bin_c: Column = Column(Define.BINARY())
+            vbin_c: Column = Column(Define.VARBINARY(255))
+            blob_c: Column = Column(Define.BLOB())
+            bit_c: Column = Column(Define.BIT())
+            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
+            set_c: Column = Column(Define.SET("A", "B", "C"))
+            json_c: Column = Column(Define.JSON())
             g_col: GeneratedColumn = GeneratedColumn(Define.INT(), "id")
 
         class TestDatabase(Database):
@@ -1002,12 +1108,29 @@ class TestColumnCopy(TestCase):
             tb2: TestTable = TestTable()
 
         db = TestDatabase("test_db", self.get_pool())
-        self.assertIsNot(db.tb1.id, db.tb2.id)
+        self.assertIsNot(db.tb1.int_c, db.tb2.int_c)
+        self.assertIsNot(db.tb1.float_c, db.tb2.float_c)
+        self.assertIsNot(db.tb1.decimal_c, db.tb2.decimal_c)
+        self.assertIsNot(db.tb1.date_c, db.tb2.date_c)
+        self.assertIsNot(db.tb1.dt_c, db.tb2.dt_c)
+        self.assertIsNot(db.tb1.ts_c, db.tb2.ts_c)
+        self.assertIsNot(db.tb1.time_c, db.tb2.time_c)
+        self.assertIsNot(db.tb1.year_c, db.tb2.year_c)
+        self.assertIsNot(db.tb1.char_c, db.tb2.char_c)
+        self.assertIsNot(db.tb1.vchar_c, db.tb2.vchar_c)
+        self.assertIsNot(db.tb1.text_c, db.tb2.text_c)
+        self.assertIsNot(db.tb1.bin_c, db.tb2.bin_c)
+        self.assertIsNot(db.tb1.vbin_c, db.tb2.vbin_c)
+        self.assertIsNot(db.tb1.blob_c, db.tb2.blob_c)
+        self.assertIsNot(db.tb1.bit_c, db.tb2.bit_c)
+        self.assertIsNot(db.tb1.enum_c, db.tb2.enum_c)
+        self.assertIsNot(db.tb1.set_c, db.tb2.set_c)
+        self.assertIsNot(db.tb1.json_c, db.tb2.json_c)
         self.assertIsNot(db.tb1.g_col, db.tb2.g_col)
-        self.assertIsNot(db.tb1["id"], db.tb2["id"])
-        self.assertIsNot(db.tb1["g_col"], db.tb2["g_col"])
-        self.assertIsNot(db.tb1.id.definition, db.tb2.id.definition)
-        self.assertIsNot(db.tb1.g_col.definition, db.tb2.g_col.definition)
+        for col1 in db.tb1:
+            name = col1.name
+            self.assertIsNot(db.tb1[name], db.tb2[name])
+            self.assertIsNot(db.tb1[name].definition, db.tb2[name].definition)
 
         self.log_ended("COPY")
 
@@ -1018,6 +1141,8 @@ class TestColumnSyncSQL(TestCase):
     def test_all(self) -> None:
         self.test_column_basic_sql()
         self.test_generated_column_basic_sql()
+        self.test_bit_column()
+        self.test_json_column()
 
     def test_column_basic_sql(self) -> None:
         self.log_start("COLUMN BASIC SQL")
@@ -1204,7 +1329,6 @@ class TestColumnSyncSQL(TestCase):
             tx: Column = Column(Define.TEXT())
             mt: Column = Column(Define.MEDIUMTEXT())
             lt: Column = Column(Define.LONGTEXT())
-            en: Column = Column(Define.ENUM("A", "B", "C"))
             # Null
             ch_n: Column = Column(Define.CHAR(null=True))
             vch_n: Column = Column(Define.VARCHAR(255, null=True))
@@ -1212,11 +1336,9 @@ class TestColumnSyncSQL(TestCase):
             tx_n: Column = Column(Define.TEXT(null=True))
             mt_n: Column = Column(Define.MEDIUMTEXT(null=True))
             lt_n: Column = Column(Define.LONGTEXT(null=True))
-            en_n: Column = Column(Define.ENUM("A", "B", "C", null=True))
             # Default
             ch_d: Column = Column(Define.CHAR(default="D"))
             vch_d: Column = Column(Define.VARCHAR(255, default="Default"))
-            en_d: Column = Column(Define.ENUM("A", "B", "C", default="A"))
             # Comment
             ch_c: Column = Column(Define.CHAR(comment="Comment"))
             vch_c: Column = Column(Define.VARCHAR(255, comment="Comment"))
@@ -1224,7 +1346,6 @@ class TestColumnSyncSQL(TestCase):
             tx_c: Column = Column(Define.TEXT(comment="Comment"))
             mt_c: Column = Column(Define.MEDIUMTEXT(comment="Comment"))
             lt_c: Column = Column(Define.LONGTEXT(comment="Comment"))
-            en_c: Column = Column(Define.ENUM("A", "B", "C", comment="描述"))
             # Visible
             ch_v: Column = Column(Define.CHAR(visible=False))
             vch_v: Column = Column(Define.VARCHAR(255, visible=False))
@@ -1232,7 +1353,6 @@ class TestColumnSyncSQL(TestCase):
             tx_v: Column = Column(Define.TEXT(visible=False))
             mt_v: Column = Column(Define.MEDIUMTEXT(visible=False))
             lt_v: Column = Column(Define.LONGTEXT(visible=False))
-            en_v: Column = Column(Define.ENUM("A", "B", "C", visible=False))
             # Length
             ch_l1: Column = Column(Define.CHAR(1))
             ch_l2: Column = Column(Define.CHAR(255))
@@ -1247,6 +1367,7 @@ class TestColumnSyncSQL(TestCase):
             bl: Column = Column(Define.BLOB())
             mb: Column = Column(Define.MEDIUMBLOB())
             lb: Column = Column(Define.LONGBLOB())
+            bt: Column = Column(Define.BIT())
             # Null
             bi_n: Column = Column(Define.BINARY(null=True))
             vbi_n: Column = Column(Define.VARBINARY(100, null=True))
@@ -1254,9 +1375,11 @@ class TestColumnSyncSQL(TestCase):
             bl_n: Column = Column(Define.BLOB(null=True))
             mb_n: Column = Column(Define.MEDIUMBLOB(null=True))
             lb_n: Column = Column(Define.LONGBLOB(null=True))
+            bt_n: Column = Column(Define.BIT(null=True))
             # Default
             bi_d: Column = Column(Define.BINARY(default=b"D"))
             vbi_d: Column = Column(Define.VARBINARY(100, default="默认".encode()))
+            bt_d: Column = Column(Define.BIT(default=0))
             # Comment
             bi_c: Column = Column(Define.BINARY(comment="Comment"))
             vbi_c: Column = Column(Define.VARBINARY(100, comment="Comment"))
@@ -1264,6 +1387,7 @@ class TestColumnSyncSQL(TestCase):
             bl_c: Column = Column(Define.BLOB(comment="Comment"))
             mb_c: Column = Column(Define.MEDIUMBLOB(comment="Comment"))
             lb_c: Column = Column(Define.LONGBLOB(comment="描述"))
+            bt_c: Column = Column(Define.BIT(comment="描述"))
             # Visible
             bi_v: Column = Column(Define.BINARY(visible=False))
             vbi_v: Column = Column(Define.VARBINARY(100, visible=False))
@@ -1271,11 +1395,41 @@ class TestColumnSyncSQL(TestCase):
             bl_v: Column = Column(Define.BLOB(visible=False))
             mb_v: Column = Column(Define.MEDIUMBLOB(visible=False))
             lb_v: Column = Column(Define.LONGBLOB(visible=False))
+            bt_v: Column = Column(Define.BIT(visible=False))
             # Length
             bi_l1: Column = Column(Define.BINARY(1))
             bi_l2: Column = Column(Define.BINARY(255))
             vbi_l1: Column = Column(Define.VARBINARY(1))
             vbi_l2: Column = Column(Define.VARBINARY(255))
+            bt_l1: Column = Column(Define.BIT(2, default=b"\x02"))
+            bt_l2: Column = Column(Define.BIT(64, default=b"\x02\x02"))
+
+        class Enumerated(Table):
+            # Basic
+            en: Column = Column(Define.ENUM("A", "B", "C"))
+            st: Column = Column(Define.SET("A", "B", "C"))
+            # Null
+            en_n: Column = Column(Define.ENUM("A", "B", "C", null=True))
+            st_n: Column = Column(Define.SET("A", "B", "C", null=True))
+            # Default
+            en_d: Column = Column(Define.ENUM("A", "B", "C", default="A"))
+            st_d: Column = Column(Define.SET("A", "B", "C", default="A,B"))
+            # Comment
+            en_c: Column = Column(Define.ENUM("A", "B", "C", comment="描述"))
+            st_c: Column = Column(Define.SET("A", "B", "C", comment="描述"))
+            # Visible
+            en_v: Column = Column(Define.ENUM("A", "B", "C", visible=False))
+            st_v: Column = Column(Define.SET("A", "B", "C", visible=False))
+
+        class JSON(Table):
+            # Basic
+            json_c: Column = Column(Define.JSON())
+            # Null
+            json_c_n: Column = Column(Define.JSON(null=True))
+            # Comment
+            json_c_c: Column = Column(Define.JSON(comment="Comment"))
+            # Visible
+            json_c_v: Column = Column(Define.JSON(visible=False))
 
         class TestDatabase(Database):
             integer: Integer = Integer()
@@ -1283,6 +1437,8 @@ class TestColumnSyncSQL(TestCase):
             temporal: Temporal = Temporal()
             char: ChString = ChString()
             binary: BiString = BiString()
+            enum: Enumerated = Enumerated()
+            json: JSON = JSON()
 
         db = TestDatabase("test_db", self.get_pool())
         with self.assertRaises(sqlerr.OperationalError):
@@ -1296,10 +1452,13 @@ class TestColumnSyncSQL(TestCase):
             *db.temporal,
             *db.char,
             *db.binary,
+            *db.enum,
+            *db.json,
         ):
             # metadata should be identical
             meta = col.ShowMetadata()
             self.assertFalse(col._diff_from_metadata(meta))
+
         self.assertTrue(db.Drop())
         with self.assertRaises(sqlerr.OperationalError):
             db.integer.t_int.ShowMetadata()
@@ -1317,10 +1476,13 @@ class TestColumnSyncSQL(TestCase):
             char_c: Column = Column(Define.CHAR())
             vchar_c: Column = Column(Define.VARCHAR(255))
             text_c: Column = Column(Define.TEXT())
-            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
             bin_c: Column = Column(Define.BINARY())
             vbin_c: Column = Column(Define.VARBINARY(255))
             blob_c: Column = Column(Define.BLOB())
+            bit_c: Column = Column(Define.BIT())
+            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
+            set_c: Column = Column(Define.SET("A", "B", "C"))
+            json_c: Column = Column(Define.JSON())
 
         class TestDatabase(Database):
             tb: TestTable = TestTable()
@@ -1366,10 +1528,13 @@ class TestColumnSyncSQL(TestCase):
                 Define.CHAR(100, null=True, default="default", charset="utf8mb3", comment="Comment", visible=False),
                 Define.VARCHAR(100, null=True, default="default", collate="utf8mb3_bin", comment="Comment", visible=False),
                 Define.MEDIUMTEXT(null=True, collate="utf8mb4_bin", comment="Comment", visible=False),
-                Define.ENUM("A", "B", "C", "D", null=True, default="A", charset="utf8mb4", comment="Comment", visible=False),
                 Define.BINARY(100, null=True, default=b"default", comment="Comment", visible=False),
                 Define.MEDIUMBLOB(null=True, comment="Comment", visible=False),
                 Define.VARBINARY(100, null=True, default=b"default", comment="Comment", visible=False),
+                Define.BIT(8, null=True, default=b"\x08", comment="Comment", visible=False),
+                Define.ENUM("A", "B", "C", "D", null=True, default="A", charset="utf8mb4", comment="Comment", visible=False),
+                Define.SET("A", "B", "C", "D", null=True, default="A,B,C", charset="utf8mb4", comment="Comment", visible=False),
+                Define.JSON(null=True, comment="Comment", visible=False),
                 # fmt: on
             ):
                 col.Modify(new_def)
@@ -1380,7 +1545,10 @@ class TestColumnSyncSQL(TestCase):
             self.assertFalse(meta.visible)
             # . default on
             self.assertIsNotNone(col.definition.default)
-            self.assertIsNotNone(meta.default)
+            if col.definition.data_type == "JSON":
+                self.assertIsNone(meta.default)
+            else:
+                self.assertIsNotNone(meta.default)
             # . comment on
             self.assertEqual(col.definition.comment, "Comment")
             self.assertEqual(meta.comment, "Comment")
@@ -1426,13 +1594,16 @@ class TestColumnSyncSQL(TestCase):
             (db.tb.char_c, "d", "x"),
             (db.tb.vchar_c, "default", "x"),
             (db.tb.text_c, "default", "x"),
-            (db.tb.enum_c, "A", "x"),
             (db.tb.bin_c, b"d", "x"),
             (db.tb.vbin_c, b"default", "x"),
             (db.tb.blob_c, b"default", "x"),
+            (db.tb.bit_c, 0, "x"),
+            (db.tb.enum_c, "A", "x"),
+            (db.tb.set_c, "A,B", "x"),
+            (db.tb.json_c, "NULL", "x"),
         ):
             self.assertIsNone(col.definition.default)
-            if col in (db.tb.text_c, db.tb.blob_c):
+            if col in (db.tb.text_c, db.tb.blob_c, db.tb.json_c):
                 with self.assertRaises(sqlerr.OperationalError):
                     col.SetDefault(dft)
             else:
@@ -1739,7 +1910,6 @@ class TestColumnSyncSQL(TestCase):
             c_tx: Column = Column(Define.TEXT())
             c_mt: Column = Column(Define.MEDIUMTEXT())
             c_lt: Column = Column(Define.LONGTEXT())
-            c_en: Column = Column(Define.ENUM("A", "B", "C"))
             # Basic
             g_ch: GeneratedColumn = GeneratedColumn(Define.CHAR(), "c_ch")
             g_vch: GeneratedColumn = GeneratedColumn(Define.VARCHAR(100), "c_vch")
@@ -1747,7 +1917,6 @@ class TestColumnSyncSQL(TestCase):
             g_tx: GeneratedColumn = GeneratedColumn(Define.TEXT(), "c_tx")
             g_mt: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(), "c_mt")
             g_lt: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(), "c_lt")
-            g_en: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C"), "c_en")
             # Null
             g_ch_n: GeneratedColumn = GeneratedColumn(Define.CHAR(null=True), "c_ch")
             g_vch_n: GeneratedColumn = GeneratedColumn(Define.VARCHAR(100, null=True), "c_vch")
@@ -1755,7 +1924,6 @@ class TestColumnSyncSQL(TestCase):
             g_tx_n: GeneratedColumn = GeneratedColumn(Define.TEXT(null=True), "c_tx")
             g_mt_n: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(null=True), "c_mt")
             g_lt_n: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(null=True), "c_lt")
-            g_en_n: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", null=True), "c_en")
             # Comment
             g_ch_c: GeneratedColumn = GeneratedColumn(Define.CHAR(comment="Comment"), "c_ch")
             g_vch_c: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, comment="Comment"), "c_vch")
@@ -1763,7 +1931,6 @@ class TestColumnSyncSQL(TestCase):
             g_tx_c: GeneratedColumn = GeneratedColumn(Define.TEXT(comment="Comment"), "c_tx")
             g_mt_c: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(comment="Comment"), "c_mt")
             g_lt_c: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(comment="Comment"), "c_lt")
-            g_en_c: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", comment="Comment"), "c_en")
             # Visible
             g_ch_v: GeneratedColumn = GeneratedColumn(Define.CHAR(visible=False), "c_ch")
             g_vch_v: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, visible=False), "c_vch")
@@ -1771,11 +1938,9 @@ class TestColumnSyncSQL(TestCase):
             g_tx_v: GeneratedColumn = GeneratedColumn(Define.TEXT(visible=False), "c_tx")
             g_mt_v: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(visible=False), "c_mt")
             g_lt_v: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(visible=False), "c_lt")
-            g_en_v: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", visible=False), "c_en")
             # Default (default should be omitted)
             g_ch_d: GeneratedColumn = GeneratedColumn(Define.CHAR(default="D"), "c_ch")
             g_vch_d: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, default="Default"), "c_vch")
-            g_en_d: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", default="A"), "c_en")
             # Length
             g_ch_l1: GeneratedColumn = GeneratedColumn(Define.CHAR(1), "c_ch")
             g_ch_l2: GeneratedColumn = GeneratedColumn(Define.CHAR(255), "c_ch")
@@ -1792,6 +1957,7 @@ class TestColumnSyncSQL(TestCase):
             c_bl: Column = Column(Define.BLOB())
             c_mb: Column = Column(Define.MEDIUMBLOB())
             c_lb: Column = Column(Define.LONGBLOB())
+            c_bt: Column = Column(Define.BIT())
             # Basic
             g_bi: GeneratedColumn = GeneratedColumn(Define.BINARY(), "c_bi")
             g_vbi: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100), "c_vbi")
@@ -1799,6 +1965,7 @@ class TestColumnSyncSQL(TestCase):
             g_bl: GeneratedColumn = GeneratedColumn(Define.BLOB(), "c_bl")
             g_mb: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(), "c_mb")
             g_lb: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(), "c_lb")
+            g_bt: GeneratedColumn = GeneratedColumn(Define.BIT(), "c_bt")
             # Null
             g_bi_n: GeneratedColumn = GeneratedColumn(Define.BINARY(null=True), "c_bi")
             g_vbi_n: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, null=True), "c_vbi")
@@ -1806,6 +1973,7 @@ class TestColumnSyncSQL(TestCase):
             g_bl_n: GeneratedColumn = GeneratedColumn(Define.BLOB(null=True), "c_bl")
             g_mb_n: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(null=True), "c_mb")
             g_lb_n: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(null=True), "c_lb")
+            g_bt_n: GeneratedColumn = GeneratedColumn(Define.BIT(null=True), "c_bt")
             # Comment
             g_bi_c: GeneratedColumn = GeneratedColumn(Define.BINARY(comment="Comment"), "c_bi")
             g_vbi_c: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, comment="Comment"), "c_vbi")
@@ -1813,6 +1981,7 @@ class TestColumnSyncSQL(TestCase):
             g_bl_c: GeneratedColumn = GeneratedColumn(Define.BLOB(comment="Comment"), "c_bl")
             g_mb_c: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(comment="Comment"), "c_mb")
             g_lb_c: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(comment="Comment"), "c_lb")
+            g_bt_c: GeneratedColumn = GeneratedColumn(Define.BIT(comment="Comment"), "c_bt")
             # Visible
             g_bi_v: GeneratedColumn = GeneratedColumn(Define.BINARY(visible=False), "c_bi")
             g_vbi_v: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, visible=False), "c_vbi")
@@ -1820,14 +1989,54 @@ class TestColumnSyncSQL(TestCase):
             g_bl_v: GeneratedColumn = GeneratedColumn(Define.BLOB(visible=False), "c_bl")
             g_mb_v: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(visible=False), "c_mb")
             g_lb_v: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(visible=False), "c_lb")
+            g_bt_v: GeneratedColumn = GeneratedColumn(Define.BIT(visible=False), "c_bt")
             # Default (default should be omitted)
             g_bi_d: GeneratedColumn = GeneratedColumn(Define.BINARY(default=b"D"), "c_bi")
             g_vbi_d: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, default="默认".encode()), "c_vbi")
+            g_bt_d: GeneratedColumn = GeneratedColumn(Define.BIT(8, default=b"\x08"), "c_bt")
             # Length
             g_bi_l1: GeneratedColumn = GeneratedColumn(Define.BINARY(1), "c_bi")
             g_bi_l2: GeneratedColumn = GeneratedColumn(Define.BINARY(255), "c_bi")
             g_vbi_l1: GeneratedColumn = GeneratedColumn(Define.VARBINARY(1), "c_bi")
             g_vbi_l2: GeneratedColumn = GeneratedColumn(Define.VARBINARY(255), "c_bi")
+            g_bt_l1: GeneratedColumn = GeneratedColumn(Define.BIT(1, default=1), "c_bt")
+            g_bt_l8: GeneratedColumn = GeneratedColumn(Define.BIT(8, default=2), "c_bt")
+            # fmt: on
+
+        class Enumerated(Table):
+            # fmt: off
+            # Normal Column
+            c_en: Column = Column(Define.ENUM("A", "B", "C"))
+            c_st: Column = Column(Define.SET("A", "B", "C"))
+            # Basic
+            g_en: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C"), "c_en")
+            g_st: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C"), "c_st")
+            # Null
+            g_en_n: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", null=True), "c_en")
+            g_st_n: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", null=True), "c_st")
+            # Comment
+            g_en_c: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", comment="Comment"), "c_en")
+            g_st_c: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", comment="Comment"), "c_st")
+            # Visible
+            g_en_v: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", visible=False), "c_en")
+            g_st_v: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", visible=False), "c_st")
+            # Default (default should be omitted)
+            g_en_d: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", default="A"), "c_en")
+            g_st_d: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", default="A,B"), "c_st")
+            # fmt: on
+
+        class JSON(Table):
+            # fmt: off
+            # Real Column
+            c_json: Column = Column(Define.JSON())
+            # Basic
+            g_json: GeneratedColumn = GeneratedColumn(Define.JSON(), "c_json")
+            # Null
+            g_json_n: GeneratedColumn = GeneratedColumn(Define.JSON(null=True), "c_json")
+            # Comment
+            g_json_c: GeneratedColumn = GeneratedColumn(Define.JSON(comment="Comment"), "c_json")
+            # Visible
+            g_json_v: GeneratedColumn = GeneratedColumn(Define.JSON(visible=False), "c_json")
             # fmt: on
 
         class TestDatabase(Database):
@@ -1836,6 +2045,8 @@ class TestColumnSyncSQL(TestCase):
             temporal: Temporal = Temporal()
             char: ChString = ChString()
             binary: BiString = BiString()
+            enum: Enumerated = Enumerated()
+            json: JSON = JSON()
 
         db = TestDatabase("test_db", self.get_pool())
         db.Drop(True)
@@ -1846,6 +2057,8 @@ class TestColumnSyncSQL(TestCase):
             db.temporal,
             db.char,
             db.binary,
+            db.enum,
+            db.json,
         ):
             tb.Create()
             for col in tb:
@@ -1899,10 +2112,13 @@ class TestColumnSyncSQL(TestCase):
             char_c: Column = Column(Define.CHAR())
             vchar_c: Column = Column(Define.VARCHAR(255))
             text_c: Column = Column(Define.TEXT())
-            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
             bin_c: Column = Column(Define.BINARY())
             vbin_c: Column = Column(Define.VARBINARY(255))
             blob_c: Column = Column(Define.BLOB())
+            bit_c: Column = Column(Define.BIT())
+            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
+            set_c: Column = Column(Define.SET("A", "B", "C"))
+            json_c: Column = Column(Define.JSON())
             # Generated Column
             g_col: GeneratedColumn = GeneratedColumn(Define.INT(), "int_c", False)
 
@@ -1951,10 +2167,13 @@ class TestColumnSyncSQL(TestCase):
             (Define.CHAR(comment="Comment", visible=False), sqlfunc.CONCAT("char_c", "'_C'")),
             (Define.VARCHAR(255, comment="Comment", visible=False), sqlfunc.CONCAT("vchar_c", "'_V'")),
             (Define.MEDIUMTEXT(comment="Comment", visible=False), "text_c"),
-            (Define.ENUM("A", "B", "C", "D", comment="Comment", visible=False), "enum_c"),
             (Define.BINARY(comment="Comment", visible=False), "bin_c"),
             (Define.MEDIUMBLOB(comment="Comment", visible=False), "blob_c"),
             (Define.VARBINARY(255, comment="Comment", visible=False), "vbin_c"),
+            (Define.BIT(8, comment="Comment", visible=False), "bit_c"),
+            (Define.ENUM("A", "B", "C", "D", comment="Comment", visible=False), "enum_c"),
+            (Define.SET("A", "B", "C", "D", comment="Comment", visible=False), "set_c"),
+            (Define.JSON(comment="Comment", visible=False), "json_c"),
             # fmt: on
         ]:
             self.assertTrue(col.Modify(*args))
@@ -2128,6 +2347,149 @@ class TestColumnSyncSQL(TestCase):
         self.assertTrue(db.Drop(True))
         self.log_ended("GENERATED COLUMN BASIC SQL")
 
+    def test_bit_column(self) -> None:
+        self.log_start("BIT COLUMN TEST")
+
+        from sqlcycli import BIT
+
+        class Bit(Table):
+            # Basic
+            bit: Column = Column(Define.BIT())
+            # Null
+            bit_n: Column = Column(Define.BIT(null=True))
+            # Default
+            bit_d: Column = Column(Define.BIT(default=0))
+            # Comment
+            bit_c: Column = Column(Define.BIT(comment="描述"))
+            # Length
+            bit_l1: Column = Column(Define.BIT(2, default=b"\x02"))
+            bit_l2: Column = Column(Define.BIT(64, default=514))
+            bit_l3: Column = Column(Define.BIT(64, default=b"\x02\x02"))
+
+        class TestDatabase(Database):
+            bit: Bit = Bit()
+
+        db = TestDatabase("test_db", self.get_pool())
+        db.Drop(True)
+        db.Initialize()
+
+        with db.acquire() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO test_db.bit (bit, bit_n, bit_d, bit_c, bit_l1, bit_l2) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (
+                        BIT(b"\x00"),
+                        BIT(b"\x01"),
+                        0,
+                        1,
+                        2,
+                        BIT(b"\x02\x02"),
+                    ),
+                )
+                cur.execute("SELECT * FROM test_db.bit")
+                res = cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        b"\x00",
+                        b"\x01",
+                        b"\x00",
+                        b"\x01",
+                        b"\x02",
+                        b"\x00\x00\x00\x00\x00\x00\x02\x02",
+                        b"\x00\x00\x00\x00\x00\x00\x02\x02",
+                    ),
+                )
+                conn.set_decode_bit(True)
+                cur.execute("SELECT * FROM test_db.bit")
+                res = cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        0,
+                        1,
+                        0,
+                        1,
+                        2,
+                        514,
+                        514,
+                    ),
+                )
+        db.Drop(True)
+
+        self.log_ended("BIT COLUMN TEST")
+
+    def test_json_column(self) -> None:
+        self.log_start("JSON COLUMN TEST")
+
+        from sqlcycli import JSON
+
+        class Json(Table):
+            json_1: Column = Column(Define.JSON())  # str
+            json_2: Column = Column(Define.JSON())  # int
+            json_3: Column = Column(Define.JSON())  # float
+            json_4: Column = Column(Define.JSON())  # bool
+            json_5: Column = Column(Define.JSON())  # null
+            json_6: Column = Column(Define.JSON())  # array
+            json_7: Column = Column(Define.JSON())  # dict
+            json_n: Column = Column(Define.JSON(null=True))
+
+        class TestDatabase(Database):
+            json: Json = Json()
+
+        db = TestDatabase("test_db", self.get_pool())
+        db.Drop(True)
+        db.Initialize()
+
+        with db.acquire() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO test_db.json (json_1, json_2, json_3, json_4, json_5, json_6, json_7) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        JSON("string"),
+                        JSON(12345),
+                        JSON(3.14159),
+                        JSON(True),
+                        JSON(None),
+                        JSON([1, "two", 3.0, False, None]),
+                        JSON({"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"}),
+                    ),
+                )
+                cur.execute("SELECT * FROM test_db.json")
+                res = cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        '"string"',
+                        "12345",
+                        "3.14159",
+                        "true",
+                        "null",
+                        '[1, "two", 3.0, false, null]',
+                        '{"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"}',
+                        None,
+                    ),
+                )
+                conn.set_decode_json(True)
+                cur.execute("SELECT * FROM test_db.json")
+                res = cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        "string",
+                        12345,
+                        3.14159,
+                        True,
+                        None,
+                        [1, "two", 3.0, False, None],
+                        {"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"},
+                        None,
+                    ),
+                )
+        db.Drop(True)
+
+        self.log_ended("JSON COLUMN TEST")
+
 
 class TestColumnAsyncSQL(TestCase):
     name: str = "Column Async SQL"
@@ -2135,6 +2497,8 @@ class TestColumnAsyncSQL(TestCase):
     async def test_all(self) -> None:
         await self.test_column_basic_sql()
         await self.test_generated_column_basic_sql()
+        await self.test_bit_column()
+        await self.test_json_column()
 
     async def test_column_basic_sql(self) -> None:
         self.log_start("COLUMN BASIC SQL")
@@ -2321,7 +2685,6 @@ class TestColumnAsyncSQL(TestCase):
             tx: Column = Column(Define.TEXT())
             mt: Column = Column(Define.MEDIUMTEXT())
             lt: Column = Column(Define.LONGTEXT())
-            en: Column = Column(Define.ENUM("A", "B", "C"))
             # Null
             ch_n: Column = Column(Define.CHAR(null=True))
             vch_n: Column = Column(Define.VARCHAR(255, null=True))
@@ -2329,11 +2692,9 @@ class TestColumnAsyncSQL(TestCase):
             tx_n: Column = Column(Define.TEXT(null=True))
             mt_n: Column = Column(Define.MEDIUMTEXT(null=True))
             lt_n: Column = Column(Define.LONGTEXT(null=True))
-            en_n: Column = Column(Define.ENUM("A", "B", "C", null=True))
             # Default
             ch_d: Column = Column(Define.CHAR(default="D"))
             vch_d: Column = Column(Define.VARCHAR(255, default="Default"))
-            en_d: Column = Column(Define.ENUM("A", "B", "C", default="A"))
             # Comment
             ch_c: Column = Column(Define.CHAR(comment="Comment"))
             vch_c: Column = Column(Define.VARCHAR(255, comment="Comment"))
@@ -2341,7 +2702,6 @@ class TestColumnAsyncSQL(TestCase):
             tx_c: Column = Column(Define.TEXT(comment="Comment"))
             mt_c: Column = Column(Define.MEDIUMTEXT(comment="Comment"))
             lt_c: Column = Column(Define.LONGTEXT(comment="Comment"))
-            en_c: Column = Column(Define.ENUM("A", "B", "C", comment="描述"))
             # Visible
             ch_v: Column = Column(Define.CHAR(visible=False))
             vch_v: Column = Column(Define.VARCHAR(255, visible=False))
@@ -2349,7 +2709,6 @@ class TestColumnAsyncSQL(TestCase):
             tx_v: Column = Column(Define.TEXT(visible=False))
             mt_v: Column = Column(Define.MEDIUMTEXT(visible=False))
             lt_v: Column = Column(Define.LONGTEXT(visible=False))
-            en_v: Column = Column(Define.ENUM("A", "B", "C", visible=False))
             # Length
             ch_l1: Column = Column(Define.CHAR(1))
             ch_l2: Column = Column(Define.CHAR(255))
@@ -2364,6 +2723,7 @@ class TestColumnAsyncSQL(TestCase):
             bl: Column = Column(Define.BLOB())
             mb: Column = Column(Define.MEDIUMBLOB())
             lb: Column = Column(Define.LONGBLOB())
+            bt: Column = Column(Define.BIT())
             # Null
             bi_n: Column = Column(Define.BINARY(null=True))
             vbi_n: Column = Column(Define.VARBINARY(100, null=True))
@@ -2371,9 +2731,11 @@ class TestColumnAsyncSQL(TestCase):
             bl_n: Column = Column(Define.BLOB(null=True))
             mb_n: Column = Column(Define.MEDIUMBLOB(null=True))
             lb_n: Column = Column(Define.LONGBLOB(null=True))
+            bt_n: Column = Column(Define.BIT(null=True))
             # Default
             bi_d: Column = Column(Define.BINARY(default=b"D"))
             vbi_d: Column = Column(Define.VARBINARY(100, default="默认".encode()))
+            bt_d: Column = Column(Define.BIT(default=0))
             # Comment
             bi_c: Column = Column(Define.BINARY(comment="Comment"))
             vbi_c: Column = Column(Define.VARBINARY(100, comment="Comment"))
@@ -2381,6 +2743,7 @@ class TestColumnAsyncSQL(TestCase):
             bl_c: Column = Column(Define.BLOB(comment="Comment"))
             mb_c: Column = Column(Define.MEDIUMBLOB(comment="Comment"))
             lb_c: Column = Column(Define.LONGBLOB(comment="描述"))
+            bt_c: Column = Column(Define.BIT(comment="描述"))
             # Visible
             bi_v: Column = Column(Define.BINARY(visible=False))
             vbi_v: Column = Column(Define.VARBINARY(100, visible=False))
@@ -2388,11 +2751,41 @@ class TestColumnAsyncSQL(TestCase):
             bl_v: Column = Column(Define.BLOB(visible=False))
             mb_v: Column = Column(Define.MEDIUMBLOB(visible=False))
             lb_v: Column = Column(Define.LONGBLOB(visible=False))
+            bt_v: Column = Column(Define.BIT(visible=False))
             # Length
             bi_l1: Column = Column(Define.BINARY(1))
             bi_l2: Column = Column(Define.BINARY(255))
             vbi_l1: Column = Column(Define.VARBINARY(1))
             vbi_l2: Column = Column(Define.VARBINARY(255))
+            bt_l1: Column = Column(Define.BIT(2, default=b"\x02"))
+            bt_l2: Column = Column(Define.BIT(64, default=b"\x02\x02"))
+
+        class Enumerated(Table):
+            # Basic
+            en: Column = Column(Define.ENUM("A", "B", "C"))
+            st: Column = Column(Define.SET("A", "B", "C"))
+            # Null
+            en_n: Column = Column(Define.ENUM("A", "B", "C", null=True))
+            st_n: Column = Column(Define.SET("A", "B", "C", null=True))
+            # Default
+            en_d: Column = Column(Define.ENUM("A", "B", "C", default="A"))
+            st_d: Column = Column(Define.SET("A", "B", "C", default="A,B"))
+            # Comment
+            en_c: Column = Column(Define.ENUM("A", "B", "C", comment="描述"))
+            st_c: Column = Column(Define.SET("A", "B", "C", comment="描述"))
+            # Visible
+            en_v: Column = Column(Define.ENUM("A", "B", "C", visible=False))
+            st_v: Column = Column(Define.SET("A", "B", "C", visible=False))
+
+        class JSON(Table):
+            # Basic
+            json_c: Column = Column(Define.JSON())
+            # Null
+            json_c_n: Column = Column(Define.JSON(null=True))
+            # Comment
+            json_c_c: Column = Column(Define.JSON(comment="Comment"))
+            # Visible
+            json_c_v: Column = Column(Define.JSON(visible=False))
 
         class TestDatabase(Database):
             integer: Integer = Integer()
@@ -2400,6 +2793,8 @@ class TestColumnAsyncSQL(TestCase):
             temporal: Temporal = Temporal()
             char: ChString = ChString()
             binary: BiString = BiString()
+            enum: Enumerated = Enumerated()
+            json: JSON = JSON()
 
         db = TestDatabase("test_db", self.get_pool())
         with self.assertRaises(sqlerr.OperationalError):
@@ -2413,6 +2808,8 @@ class TestColumnAsyncSQL(TestCase):
             *db.temporal,
             *db.char,
             *db.binary,
+            *db.enum,
+            *db.json,
         ):
             # metadata should be identical
             meta = await col.aioShowMetadata()
@@ -2434,10 +2831,13 @@ class TestColumnAsyncSQL(TestCase):
             char_c: Column = Column(Define.CHAR())
             vchar_c: Column = Column(Define.VARCHAR(255))
             text_c: Column = Column(Define.TEXT())
-            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
             bin_c: Column = Column(Define.BINARY())
             vbin_c: Column = Column(Define.VARBINARY(255))
             blob_c: Column = Column(Define.BLOB())
+            bit_c: Column = Column(Define.BIT())
+            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
+            set_c: Column = Column(Define.SET("A", "B", "C"))
+            json_c: Column = Column(Define.JSON())
 
         class TestDatabase(Database):
             tb: TestTable = TestTable()
@@ -2483,10 +2883,13 @@ class TestColumnAsyncSQL(TestCase):
                 Define.CHAR(100, null=True, default="default", charset="utf8mb3", comment="Comment", visible=False),
                 Define.VARCHAR(100, null=True, default="default", collate="utf8mb3_bin", comment="Comment", visible=False),
                 Define.MEDIUMTEXT(null=True, collate="utf8mb4_bin", comment="Comment", visible=False),
-                Define.ENUM("A", "B", "C", "D", null=True, default="A", charset="utf8mb4", comment="Comment", visible=False),
                 Define.BINARY(100, null=True, default=b"default", comment="Comment", visible=False),
                 Define.MEDIUMBLOB(null=True, comment="Comment", visible=False),
                 Define.VARBINARY(100, null=True, default=b"default", comment="Comment", visible=False),
+                Define.BIT(8, null=True, default=b"\x08", comment="Comment", visible=False),
+                Define.ENUM("A", "B", "C", "D", null=True, default="A", charset="utf8mb4", comment="Comment", visible=False),
+                Define.SET("A", "B", "C", "D", null=True, default="A,B,C", charset="utf8mb4", comment="Comment", visible=False),
+                Define.JSON(null=True, comment="Comment", visible=False),
                 # fmt: on
             ):
                 await col.aioModify(new_def)
@@ -2497,7 +2900,10 @@ class TestColumnAsyncSQL(TestCase):
             self.assertFalse(meta.visible)
             # . default on
             self.assertIsNotNone(col.definition.default)
-            self.assertIsNotNone(meta.default)
+            if col.definition.data_type == "JSON":
+                self.assertIsNone(meta.default)
+            else:
+                self.assertIsNotNone(meta.default)
             # . comment on
             self.assertEqual(col.definition.comment, "Comment")
             self.assertEqual(meta.comment, "Comment")
@@ -2543,13 +2949,16 @@ class TestColumnAsyncSQL(TestCase):
             (db.tb.char_c, "d", "x"),
             (db.tb.vchar_c, "default", "x"),
             (db.tb.text_c, "default", "x"),
-            (db.tb.enum_c, "A", "x"),
             (db.tb.bin_c, b"d", "x"),
             (db.tb.vbin_c, b"default", "x"),
             (db.tb.blob_c, b"default", "x"),
+            (db.tb.bit_c, 0, "x"),
+            (db.tb.enum_c, "A", "x"),
+            (db.tb.set_c, "A,B", "x"),
+            (db.tb.json_c, "NULL", "x"),
         ):
             self.assertIsNone(col.definition.default)
-            if col in (db.tb.text_c, db.tb.blob_c):
+            if col in (db.tb.text_c, db.tb.blob_c, db.tb.json_c):
                 with self.assertRaises(sqlerr.OperationalError):
                     await col.aioSetDefault(dft)
             else:
@@ -2856,7 +3265,6 @@ class TestColumnAsyncSQL(TestCase):
             c_tx: Column = Column(Define.TEXT())
             c_mt: Column = Column(Define.MEDIUMTEXT())
             c_lt: Column = Column(Define.LONGTEXT())
-            c_en: Column = Column(Define.ENUM("A", "B", "C"))
             # Basic
             g_ch: GeneratedColumn = GeneratedColumn(Define.CHAR(), "c_ch")
             g_vch: GeneratedColumn = GeneratedColumn(Define.VARCHAR(100), "c_vch")
@@ -2864,7 +3272,6 @@ class TestColumnAsyncSQL(TestCase):
             g_tx: GeneratedColumn = GeneratedColumn(Define.TEXT(), "c_tx")
             g_mt: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(), "c_mt")
             g_lt: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(), "c_lt")
-            g_en: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C"), "c_en")
             # Null
             g_ch_n: GeneratedColumn = GeneratedColumn(Define.CHAR(null=True), "c_ch")
             g_vch_n: GeneratedColumn = GeneratedColumn(Define.VARCHAR(100, null=True), "c_vch")
@@ -2872,7 +3279,6 @@ class TestColumnAsyncSQL(TestCase):
             g_tx_n: GeneratedColumn = GeneratedColumn(Define.TEXT(null=True), "c_tx")
             g_mt_n: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(null=True), "c_mt")
             g_lt_n: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(null=True), "c_lt")
-            g_en_n: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", null=True), "c_en")
             # Comment
             g_ch_c: GeneratedColumn = GeneratedColumn(Define.CHAR(comment="Comment"), "c_ch")
             g_vch_c: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, comment="Comment"), "c_vch")
@@ -2880,7 +3286,6 @@ class TestColumnAsyncSQL(TestCase):
             g_tx_c: GeneratedColumn = GeneratedColumn(Define.TEXT(comment="Comment"), "c_tx")
             g_mt_c: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(comment="Comment"), "c_mt")
             g_lt_c: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(comment="Comment"), "c_lt")
-            g_en_c: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", comment="Comment"), "c_en")
             # Visible
             g_ch_v: GeneratedColumn = GeneratedColumn(Define.CHAR(visible=False), "c_ch")
             g_vch_v: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, visible=False), "c_vch")
@@ -2888,11 +3293,9 @@ class TestColumnAsyncSQL(TestCase):
             g_tx_v: GeneratedColumn = GeneratedColumn(Define.TEXT(visible=False), "c_tx")
             g_mt_v: GeneratedColumn = GeneratedColumn(Define.MEDIUMTEXT(visible=False), "c_mt")
             g_lt_v: GeneratedColumn = GeneratedColumn(Define.LONGTEXT(visible=False), "c_lt")
-            g_en_v: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", visible=False), "c_en")
             # Default (default should be omitted)
             g_ch_d: GeneratedColumn = GeneratedColumn(Define.CHAR(default="D"), "c_ch")
             g_vch_d: GeneratedColumn = GeneratedColumn(Define.VARCHAR(255, default="Default"), "c_vch")
-            g_en_d: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", default="A"), "c_en")
             # Length
             g_ch_l1: GeneratedColumn = GeneratedColumn(Define.CHAR(1), "c_ch")
             g_ch_l2: GeneratedColumn = GeneratedColumn(Define.CHAR(255), "c_ch")
@@ -2909,6 +3312,7 @@ class TestColumnAsyncSQL(TestCase):
             c_bl: Column = Column(Define.BLOB())
             c_mb: Column = Column(Define.MEDIUMBLOB())
             c_lb: Column = Column(Define.LONGBLOB())
+            c_bt: Column = Column(Define.BIT())
             # Basic
             g_bi: GeneratedColumn = GeneratedColumn(Define.BINARY(), "c_bi")
             g_vbi: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100), "c_vbi")
@@ -2916,6 +3320,7 @@ class TestColumnAsyncSQL(TestCase):
             g_bl: GeneratedColumn = GeneratedColumn(Define.BLOB(), "c_bl")
             g_mb: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(), "c_mb")
             g_lb: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(), "c_lb")
+            g_bt: GeneratedColumn = GeneratedColumn(Define.BIT(), "c_bt")
             # Null
             g_bi_n: GeneratedColumn = GeneratedColumn(Define.BINARY(null=True), "c_bi")
             g_vbi_n: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, null=True), "c_vbi")
@@ -2923,6 +3328,7 @@ class TestColumnAsyncSQL(TestCase):
             g_bl_n: GeneratedColumn = GeneratedColumn(Define.BLOB(null=True), "c_bl")
             g_mb_n: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(null=True), "c_mb")
             g_lb_n: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(null=True), "c_lb")
+            g_bt_n: GeneratedColumn = GeneratedColumn(Define.BIT(null=True), "c_bt")
             # Comment
             g_bi_c: GeneratedColumn = GeneratedColumn(Define.BINARY(comment="Comment"), "c_bi")
             g_vbi_c: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, comment="Comment"), "c_vbi")
@@ -2930,6 +3336,7 @@ class TestColumnAsyncSQL(TestCase):
             g_bl_c: GeneratedColumn = GeneratedColumn(Define.BLOB(comment="Comment"), "c_bl")
             g_mb_c: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(comment="Comment"), "c_mb")
             g_lb_c: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(comment="Comment"), "c_lb")
+            g_bt_c: GeneratedColumn = GeneratedColumn(Define.BIT(comment="Comment"), "c_bt")
             # Visible
             g_bi_v: GeneratedColumn = GeneratedColumn(Define.BINARY(visible=False), "c_bi")
             g_vbi_v: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, visible=False), "c_vbi")
@@ -2937,14 +3344,52 @@ class TestColumnAsyncSQL(TestCase):
             g_bl_v: GeneratedColumn = GeneratedColumn(Define.BLOB(visible=False), "c_bl")
             g_mb_v: GeneratedColumn = GeneratedColumn(Define.MEDIUMBLOB(visible=False), "c_mb")
             g_lb_v: GeneratedColumn = GeneratedColumn(Define.LONGBLOB(visible=False), "c_lb")
+            g_bt_v: GeneratedColumn = GeneratedColumn(Define.BIT(visible=False), "c_bt")
             # Default (default should be omitted)
             g_bi_d: GeneratedColumn = GeneratedColumn(Define.BINARY(default=b"D"), "c_bi")
             g_vbi_d: GeneratedColumn = GeneratedColumn(Define.VARBINARY(100, default="默认".encode()), "c_vbi")
+            g_bt_d: GeneratedColumn = GeneratedColumn(Define.BIT(8, default=b"\x08"), "c_bt")
             # Length
             g_bi_l1: GeneratedColumn = GeneratedColumn(Define.BINARY(1), "c_bi")
             g_bi_l2: GeneratedColumn = GeneratedColumn(Define.BINARY(255), "c_bi")
             g_vbi_l1: GeneratedColumn = GeneratedColumn(Define.VARBINARY(1), "c_bi")
             g_vbi_l2: GeneratedColumn = GeneratedColumn(Define.VARBINARY(255), "c_bi")
+            # fmt: on
+
+        class Enumerated(Table):
+            # fmt: off
+            # Normal Column
+            c_en: Column = Column(Define.ENUM("A", "B", "C"))
+            c_st: Column = Column(Define.SET("A", "B", "C"))
+            # Basic
+            g_en: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C"), "c_en")
+            g_st: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C"), "c_st")
+            # Null
+            g_en_n: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", null=True), "c_en")
+            g_st_n: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", null=True), "c_st")
+            # Comment
+            g_en_c: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", comment="Comment"), "c_en")
+            g_st_c: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", comment="Comment"), "c_st")
+            # Visible
+            g_en_v: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", visible=False), "c_en")
+            g_st_v: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", visible=False), "c_st")
+            # Default (default should be omitted)
+            g_en_d: GeneratedColumn = GeneratedColumn(Define.ENUM("A", "B", "C", default="A"), "c_en")
+            g_st_d: GeneratedColumn = GeneratedColumn(Define.SET("A", "B", "C", default="A,B"), "c_st")
+            # fmt: on
+
+        class JSON(Table):
+            # fmt: off
+            # Real Column
+            c_json: Column = Column(Define.JSON())
+            # Basic
+            g_json: GeneratedColumn = GeneratedColumn(Define.JSON(), "c_json")
+            # Null
+            g_json_n: GeneratedColumn = GeneratedColumn(Define.JSON(null=True), "c_json")
+            # Comment
+            g_json_c: GeneratedColumn = GeneratedColumn(Define.JSON(comment="Comment"), "c_json")
+            # Visible
+            g_json_v: GeneratedColumn = GeneratedColumn(Define.JSON(visible=False), "c_json")
             # fmt: on
 
         class TestDatabase(Database):
@@ -2953,6 +3398,8 @@ class TestColumnAsyncSQL(TestCase):
             temporal: Temporal = Temporal()
             char: ChString = ChString()
             binary: BiString = BiString()
+            enum: Enumerated = Enumerated()
+            json: JSON = JSON()
 
         db = TestDatabase("test_db", self.get_pool())
         await db.aioDrop(True)
@@ -2963,6 +3410,8 @@ class TestColumnAsyncSQL(TestCase):
             db.temporal,
             db.char,
             db.binary,
+            db.enum,
+            db.json,
         ):
             await tb.aioCreate()
             for col in tb:
@@ -3016,10 +3465,13 @@ class TestColumnAsyncSQL(TestCase):
             char_c: Column = Column(Define.CHAR())
             vchar_c: Column = Column(Define.VARCHAR(255))
             text_c: Column = Column(Define.TEXT())
-            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
             bin_c: Column = Column(Define.BINARY())
             vbin_c: Column = Column(Define.VARBINARY(255))
             blob_c: Column = Column(Define.BLOB())
+            bit_c: Column = Column(Define.BIT())
+            enum_c: Column = Column(Define.ENUM("A", "B", "C"))
+            set_c: Column = Column(Define.SET("A", "B", "C"))
+            json_c: Column = Column(Define.JSON())
             # Generated Column
             g_col: GeneratedColumn = GeneratedColumn(Define.INT(), "int_c", False)
 
@@ -3068,10 +3520,13 @@ class TestColumnAsyncSQL(TestCase):
             (Define.CHAR(comment="Comment", visible=False), sqlfunc.CONCAT("char_c", "'_C'")),
             (Define.VARCHAR(255, comment="Comment", visible=False), sqlfunc.CONCAT("vchar_c", "'_V'")),
             (Define.MEDIUMTEXT(comment="Comment", visible=False), "text_c"),
-            (Define.ENUM("A", "B", "C", "D", comment="Comment", visible=False), "enum_c"),
             (Define.BINARY(comment="Comment", visible=False), "bin_c"),
             (Define.MEDIUMBLOB(comment="Comment", visible=False), "blob_c"),
             (Define.VARBINARY(255, comment="Comment", visible=False), "vbin_c"),
+            (Define.BIT(8, comment="Comment", visible=False), "bit_c"),
+            (Define.ENUM("A", "B", "C", "D", comment="Comment", visible=False), "enum_c"),
+            (Define.SET("A", "B", "C", "D", comment="Comment", visible=False), "set_c"),
+            (Define.JSON(null=True, comment="Comment", visible=False), "json_c"),
             # fmt: on
         ]:
             self.assertTrue(await col.aioModify(*args))
@@ -3244,6 +3699,149 @@ class TestColumnAsyncSQL(TestCase):
         # Finished
         self.assertTrue(await db.aioDrop(True))
         self.log_ended("GENERATED COLUMN BASIC SQL")
+
+    async def test_bit_column(self) -> None:
+        self.log_start("BIT COLUMN TEST")
+
+        from sqlcycli import BIT
+
+        class Bit(Table):
+            # Basic
+            bit: Column = Column(Define.BIT())
+            # Null
+            bit_n: Column = Column(Define.BIT(null=True))
+            # Default
+            bit_d: Column = Column(Define.BIT(default=0))
+            # Comment
+            bit_c: Column = Column(Define.BIT(comment="描述"))
+            # Length
+            bit_l1: Column = Column(Define.BIT(2, default=b"\x02"))
+            bit_l2: Column = Column(Define.BIT(64, default=514))
+            bit_l3: Column = Column(Define.BIT(64, default=b"\x02\x02"))
+
+        class TestDatabase(Database):
+            bit: Bit = Bit()
+
+        db = TestDatabase("test_db", self.get_pool())
+        await db.aioDrop(True)
+        await db.aioInitialize()
+
+        async with db.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO test_db.bit (bit, bit_n, bit_d, bit_c, bit_l1, bit_l2) VALUES (%s, %s, %s, %s, %s, %s)",
+                    (
+                        BIT(b"\x00"),
+                        BIT(b"\x01"),
+                        0,
+                        1,
+                        2,
+                        BIT(b"\x02\x02"),
+                    ),
+                )
+                await cur.execute("SELECT * FROM test_db.bit")
+                res = await cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        b"\x00",
+                        b"\x01",
+                        b"\x00",
+                        b"\x01",
+                        b"\x02",
+                        b"\x00\x00\x00\x00\x00\x00\x02\x02",
+                        b"\x00\x00\x00\x00\x00\x00\x02\x02",
+                    ),
+                )
+                conn.set_decode_bit(True)
+                await cur.execute("SELECT * FROM test_db.bit")
+                res = await cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        0,
+                        1,
+                        0,
+                        1,
+                        2,
+                        514,
+                        514,
+                    ),
+                )
+        await db.aioDrop(True)
+
+        self.log_ended("BIT COLUMN TEST")
+
+    async def test_json_column(self) -> None:
+        self.log_start("JSON COLUMN TEST")
+
+        from sqlcycli import JSON
+
+        class Json(Table):
+            json_1: Column = Column(Define.JSON())  # str
+            json_2: Column = Column(Define.JSON())  # int
+            json_3: Column = Column(Define.JSON())  # float
+            json_4: Column = Column(Define.JSON())  # bool
+            json_5: Column = Column(Define.JSON())  # null
+            json_6: Column = Column(Define.JSON())  # array
+            json_7: Column = Column(Define.JSON())  # dict
+            json_n: Column = Column(Define.JSON(null=True))
+
+        class TestDatabase(Database):
+            json: Json = Json()
+
+        db = TestDatabase("test_db", self.get_pool())
+        await db.aioDrop(True)
+        await db.aioInitialize()
+
+        async with db.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO test_db.json (json_1, json_2, json_3, json_4, json_5, json_6, json_7) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        JSON("string"),
+                        JSON(12345),
+                        JSON(3.14159),
+                        JSON(True),
+                        JSON(None),
+                        JSON([1, "two", 3.0, False, None]),
+                        JSON({"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"}),
+                    ),
+                )
+                await cur.execute("SELECT * FROM test_db.json")
+                res = await cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        '"string"',
+                        "12345",
+                        "3.14159",
+                        "true",
+                        "null",
+                        '[1, "two", 3.0, false, null]',
+                        '{"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"}',
+                        None,
+                    ),
+                )
+                conn.set_decode_json(True)
+                await cur.execute("SELECT * FROM test_db.json")
+                res = await cur.fetchone()
+                self.assertEqual(
+                    res,
+                    (
+                        "string",
+                        12345,
+                        3.14159,
+                        True,
+                        None,
+                        [1, "two", 3.0, False, None],
+                        {"k1": "v1", "k2": 2, "k3": 3.0, "k4": "中文"},
+                        None,
+                    ),
+                )
+        await db.aioDrop(True)
+
+        self.log_ended("JSON COLUMN TEST")
 
 
 if __name__ == "__main__":

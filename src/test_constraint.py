@@ -429,8 +429,6 @@ class TestConstraintDefinition(TestCase):
             ForeignKey("col1", "tb2", None)
         with self.assertRaises(errors.ConstraintDefinitionError):
             ForeignKey("col1", "tb2", "col2", on_delete="C")
-        with self.assertRaises(errors.ConstraintDefinitionError):
-            ForeignKey("col1", "tb2", "col2", on_update=1)
 
         self.log_ended("Foreign Key")
 

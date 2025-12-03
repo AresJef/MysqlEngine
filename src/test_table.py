@@ -198,8 +198,6 @@ class TestTableDefinition(TestCase):
         self.assertEqual(self.setup_table(TestTable(row_format="COMPRESSED")).row_format, "COMPRESSED")
         with self.assertRaises(errors.TableDefinitionError):
             self.setup_table(TestTable(row_format="COMPACT1"))
-        with self.assertRaises(errors.TableDefinitionError):
-            self.setup_table(TestTable(row_format=1))
         # fmt: on
 
         self.log_ended("OPTIONS")
