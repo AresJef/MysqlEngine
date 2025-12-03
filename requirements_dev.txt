@@ -1,9 +1,8 @@
 # Package requirements
-cytimes>=2.1.1
 numpy>=1.25.2
 pandas>=2.1.0
-sqlcycli>=1.5.2
+sqlcycli>=2.0.1
 typing-extensions>=4.9.0
 # Development requirements
-Cython==3.0.12
+Cython==3.2.1
 setuptools>=68.0.0
