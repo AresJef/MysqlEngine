@@ -15,11 +15,11 @@ class MysqlEngineArgumentError(MysqlEngineError, ValueError):
     """Invalid argument error."""
 
 
-class MysqlEngineCriticalError(AssertionError):
+class MysqlEngineCriticalError(MysqlEngineError, AssertionError):
     """MysqlEngine critical error."""
 
 
-class MysqlEngineWarning(sqlerrors.Warning, MysqlEngineError):
+class MysqlEngineWarning(MysqlEngineError, sqlerrors.Warning):
     """MysqlEngine warning."""
 
 
