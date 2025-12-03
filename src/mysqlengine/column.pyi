@@ -254,19 +254,6 @@ class TextType(ChStringType):
         visible: bool = True,
     ): ...
 
-class EnumType(ChStringType):
-    def __init__(
-        self,
-        data_type: str,
-        elements: tuple[str],
-        null: bool = False,
-        default: str | None = None,
-        charset: str | Charset | None = None,
-        collate: str | None = None,
-        comment: str | None = None,
-        visible: bool = True,
-    ): ...
-
 class BiStringType(StringType):
     def __init__(
         self,
@@ -290,6 +277,40 @@ class BlobType(BiStringType):
         visible: bool = True,
     ): ...
 
+class BitType(BinaryType): ...
+
+# . enumeration
+class EnumeratedType(ChStringType):
+    def __init__(
+        self,
+        data_type: str,
+        elements: tuple[str],
+        maximum_elements: int,
+        null: bool = False,
+        default: str | None = None,
+        charset: str | Charset | None = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        visible: bool = True,
+    ): ...
+
+class EnumType(EnumeratedType): ...
+class SetType(EnumeratedType): ...
+
+# . json
+class JsonType(Definition):
+    def __init__(
+        self,
+        data_type: str,
+        null: bool = False,
+        default_null: bool = False,
+        comment: str | None = None,
+        visible: bool = True,
+    ): ...
+    @property
+    def default(self) -> str | None: ...
+
+# Collection
 class Define:
     # Numeric
     class TINYINT(IntegerType):
@@ -493,18 +514,6 @@ class Define:
             visible: bool = True,
         ): ...
 
-    class ENUM(EnumType):
-        def __init__(
-            self,
-            *elements: str,
-            null: bool = False,
-            default: str | None = None,
-            charset: str | Charset | None = None,
-            collate: str | None = None,
-            comment: str | None = None,
-            visible: bool = True,
-        ): ...
-
     # Binary String
     class BINARY(BinaryType):
         def __init__(
@@ -554,6 +563,51 @@ class Define:
         def __init__(
             self,
             null: bool = False,
+            comment: str | None = None,
+            visible: bool = True,
+        ): ...
+
+    class BIT(BitType):
+        def __init__(
+            self,
+            length: int | None = None,
+            null: bool = False,
+            default: bytes | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ): ...
+
+    # Enumerated Type
+    class ENUM(EnumType):
+        def __init__(
+            self,
+            *elements: str,
+            null: bool = False,
+            default: str | None = None,
+            charset: str | Charset | None = None,
+            collate: str | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ): ...
+
+    class SET(SetType):
+        def __init__(
+            self,
+            *elements: str,
+            null: bool = False,
+            default: str | tuple[str] | None = None,
+            charset: str | Charset | None = None,
+            collate: str | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ): ...
+
+    # JSON Type
+    class JSON(JsonType):
+        def __init__(
+            self,
+            null: bool = False,
+            default_null: bool = False,
             comment: str | None = None,
             visible: bool = True,
         ): ...

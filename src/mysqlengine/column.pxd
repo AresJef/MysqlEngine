@@ -31,8 +31,9 @@ cdef class Definition(Element):
         # . string column
         long long _default_length
         long long _length
-        # . enum column
+        # . enumerated column
         tuple _elements
+        unsigned int _maximum_elements
     # Generate SQL
     cpdef str _gen_definition_sql(self)
     cpdef str _gen_data_type_sql(self)
@@ -68,7 +69,7 @@ cdef class Column(Element):
     cpdef Logs Add(self, int position=?)
     cpdef bint Exists(self) except -1
     cpdef Logs Drop(self)
-    cpdef Logs _Modify(self, object definition, object expression, int position)
+    cpdef Logs _Modify(self, Definition definition, object expression, int position)
     cpdef Logs SetVisible(self, bint visible)
     cpdef Logs SetDefault(self, object default)
     cpdef ColumnMetadata ShowMetadata(self)
@@ -89,7 +90,7 @@ cdef class Column(Element):
     cpdef Logs _sync_from_metadata(self, ColumnMetadata meta, Logs logs=?)
     cpdef int _diff_from_metadata(self, ColumnMetadata meta) except -1
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     cpdef bint _set_definition(self, Definition definition) except -1
     # Copy
     cpdef Column copy(self)
@@ -101,7 +102,7 @@ cdef class GeneratedColumn(Column):
 # Columns
 cdef class Columns(Elements):
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     # Copy
     cpdef Columns copy(self)
 

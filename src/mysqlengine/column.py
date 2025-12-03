@@ -5,9 +5,9 @@ from __future__ import annotations
 
 # Cython imports
 import cython
-from cython.cimports.cpython.tuple import PyTuple_Size as tuple_len  # type: ignore
 from cython.cimports.cpython.set import PySet_Size as set_len  # type: ignore
 from cython.cimports.cpython.set import PySet_Contains as set_contains  # type: ignore
+from cython.cimports.cpython.tuple import PyTuple_Size as tuple_len  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_Split as str_split  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_GET_LENGTH as str_len  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_Substring as str_substr  # type: ignore
@@ -42,17 +42,6 @@ __all__ = [
 
 # Definition -------------------------------------------------------------------------------------------------
 """Incomplete Data Types:
-
-String (Character and Binary) Data Types
-Character (Textual) Types:
-	•	SET(‘val1’,‘val2’,…): A string object that can have zero or more values from a defined list
-
-Bit Value Type:
-	•	BIT[(M)]
-
-JSON Data Type
-	•	JSON: Stores JSON documents in a format optimized for quick read access
-
 Spatial (GIS) Data Types
 (Requires the MySQL Spatial Extensions. These store geometric data.)
 	•	GEOMETRY: A generic type for a geometry value
@@ -102,8 +91,9 @@ class Definition(Element):
     # . string column
     _default_length: cython.longlong
     _length: cython.longlong
-    # . enum column
+    # . enumerated column
     _elements: tuple[str]
+    _maximum_elements: cython.uint
 
     def __init__(
         self,
@@ -111,7 +101,7 @@ class Definition(Element):
         python_type: type,
         null: cython.bint = False,
         default: object | None = None,
-        comment: str = None,
+        comment: str | None = None,
         visible: cython.bint = True,
     ):
         """The definition of a column in the table.
@@ -154,8 +144,9 @@ class Definition(Element):
         # . string column
         self._default_length = -1
         self._length = -1
-        # . enum column
+        # . enumerated column
         self._elements = None
+        self._maximum_elements = 0
 
     # Property -----------------------------------------------------------------------------
     @property
@@ -352,7 +343,7 @@ class Definition(Element):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -495,6 +486,7 @@ class Definition(Element):
             and self._length == _o._length
             # . enum column
             and self._elements == _o._elements
+            and self._maximum_elements == _o._maximum_elements
         ):
             return 1
         else:
@@ -553,7 +545,7 @@ class IntegerType(NumericType):
         data_type: str,
         unsigned: cython.bint = False,
         null: bool = False,
-        default: int | None = None,
+        default: object | None = None,
         auto_increment: cython.bint = False,
         comment: str | None = None,
         visible: bool = True,
@@ -642,7 +634,7 @@ class IntegerType(NumericType):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -713,7 +705,7 @@ class FloatingPointType(NumericType):
         self,
         data_type: str,
         null: bool = False,
-        default: float | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -815,7 +807,7 @@ class FixedPointType(NumericType):
         precision: int | None = None,
         scale: int | None = None,
         null: bool = False,
-        default: Decimal | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -899,7 +891,7 @@ class FixedPointType(NumericType):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -1081,7 +1073,7 @@ class TemporalType(Definition):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -1232,7 +1224,7 @@ class DateAndTimeType(TemporalType):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -1277,7 +1269,7 @@ class DateType(DateAndTimeType):
         self,
         data_type: str,
         null: bool = False,
-        default: datetime.date | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -1350,7 +1342,7 @@ class DateTimeType(DateAndTimeType):
         null: bool = False,
         auto_init: bool = False,
         auto_update: bool = False,
-        default: datetime.datetime | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -1439,7 +1431,7 @@ class TimeType(TemporalType):
         data_type: str,
         fsp: int | None = None,
         null: bool = False,
-        default: datetime.time | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -1561,7 +1553,7 @@ class YearType(TemporalType):
         self,
         data_type: str,
         null: bool = False,
-        default: int | datetime.date | datetime.datetime | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -1738,7 +1730,7 @@ class StringType(Definition):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -1797,9 +1789,9 @@ class ChStringType(StringType):
         default_length: int,
         length: int | None = None,
         null: bool = False,
-        default: str | None = None,
+        default: object | None = None,
         charset: object | None = None,
-        collate: object | None = None,
+        collate: str | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -1882,7 +1874,7 @@ class ChStringType(StringType):
     @cython.ccall
     @cython.exceptval(-1, check=False)
     def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
+        """(internal) Check if the definition configurations are different
         from the remote server metadata `<'int'>`.
 
         :returns `<'int'>`:
@@ -1969,7 +1961,7 @@ class TextType(ChStringType):
         data_type: str,
         null: bool = False,
         charset: object | None = None,
-        collate: object | None = None,
+        collate: str | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -2041,235 +2033,6 @@ class TextType(ChStringType):
 
 
 @cython.cclass
-class EnumType(ChStringType):
-    """The base class for enumeration columns definition in a database table."""
-
-    def __init__(
-        self,
-        data_type: str,
-        elements: tuple[str],
-        null: bool = False,
-        default: str | None = None,
-        charset: object | None = None,
-        collate: object | None = None,
-        comment: str | None = None,
-        visible: bool = True,
-    ):
-        """The base class for enumeration columns definition in a database table.
-
-        :param data_type `<'str'>`: The string representation of the MySQL data type.
-        :param elements `<'tuple[str]'>`: The enumeration elements of the column.
-        :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
-        :param default `<'str/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
-        :param charset `<'str/Charset/None'>`: The CHARACTER SET of the column. Defaults to `None`.
-        :param collate `<'str/None'>`: The COLLATION of the column. Defaults to `None`.
-        :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
-        :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
-            An invisible column hidden to queries, but can be accessed if explicitly referenced.
-        """
-        self._elements = None
-        super().__init__(
-            data_type,
-            -1,  # -1 fixed string length
-            None,  # No length for ENUM
-            null,
-            default,
-            charset,
-            collate,
-            comment,
-            visible,
-        )
-        self._elements = self._validate_elements(elements)
-        if self._default is not None:
-            self._default = self._validate_default(self._default)
-
-    # Generate SQL -------------------------------------------------------------------------
-    @cython.ccall
-    def _gen_definition_sql(self) -> str:
-        """(internal) Generate the definition SQL of the column `<'str'>`."""
-        sql: str = self._gen_data_type_sql()
-        if not self._null:
-            sql += " NOT NULL"
-        if self._default is not None:
-            sql += self._format_sql(" DEFAULT %s", self._default)
-        if self._charset is not None:
-            sql += " COLLATE %s" % self._charset._collation
-        if self._comment is not None:
-            sql += self._format_sql(" COMMENT %s", self._comment)
-        if not self._visible:
-            sql += " INVISIBLE"
-        return sql
-
-    @cython.ccall
-    def _gen_data_type_sql(self) -> str:
-        """(internal) Generate the DATA TYPE of the column `<'str'>`."""
-        return self._data_type + self._escape_args(self._elements, False)
-
-    # Metadata -----------------------------------------------------------------------------
-    @cython.ccall
-    def _sync_from_metadata(self, meta: ColumnMetadata, logs: Logs = None) -> Logs:
-        """(internal) Synchronize local configs with the remote column metadata `<'Logs'>`."""
-        # Base configs
-        logs = ChStringType._sync_from_metadata(self, meta, logs)
-        if logs._skip_flag:
-            return logs  # exit
-
-        # Enum configs
-        elements = self._read_metadata_enum_elements(meta._column_type)
-        if self._elements != elements:
-            logs.log_config_obj(self, "elements", self._elements, elements)
-            self._elements = elements
-
-        # Return logs
-        return logs
-
-    @cython.ccall
-    @cython.exceptval(-1, check=False)
-    def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
-        """(internal) Check if the definition configurations are different 
-        from the remote server metadata `<'int'>`.
-
-        :returns `<'int'>`:
-        - `0`: Definition configurations are identical.
-        - `1`: Definition configurations differ in more than visibility.
-        - `2`: Only the visibility differs.
-        """
-        # Different
-        diff = ChStringType._diff_from_metadata(self, meta)
-        if diff == 1:
-            return 1
-        if self._elements != self._read_metadata_enum_elements(meta._column_type):
-            return 1
-        # Same or Toggle visibility
-        return diff
-
-    @cython.ccall
-    def _read_metadata_enum_elements(self, value: object) -> tuple:
-        """(internal) Read metadata ENUM elements from 'COLUMN_TYPE' `<'str'>`."""
-        if not isinstance(value, str):
-            self._raise_metadata_error(
-                "metadata 'COLUMN_TYPE' must <'str'> type, "
-                "instead got %s %r." % (type(value), value)
-            )
-        col_type: str = value
-        size: cython.Py_ssize_t = str_len(col_type)
-        if size < 8:
-            self._raise_metadata_error(
-                "metadata 'COLUMN_TYPE' is invalid '%s'." % col_type
-            )
-        if not str_tailmatch(col_type, "ENUM('", 0, size, -1):
-            self._raise_metadata_error(
-                "metadata 'COLUMN_TYPE' must startwith 'ENUM(', "
-                "instead got '%s'." % col_type
-            )
-        col_type = str_substr(col_type, 6, size - 2)
-        return tuple(str_split(col_type, "','", -1))
-
-    # Validate -----------------------------------------------------------------------------
-    @cython.ccall
-    def _validate_elements(self, elements: tuple) -> tuple[str]:
-        """(internal) Validate enumeration elements `<'tuple[str]'>`."""
-        res: list = []
-        seen = set()
-        count: cython.uint = 0
-        for el in elements:
-            if isinstance(el, str):
-                if str_len(el) == 0:
-                    self._raise_definition_error(
-                        "DEFINITION element cannot be an empty string."
-                    )
-                if set_contains(seen, el):
-                    self._raise_definition_error(
-                        "DEFINITION elements must be unique, "
-                        "instead got duplicate '%s'." % el
-                    )
-                seen.add(el)
-                res.append(el)
-                count += 1
-
-            elif isinstance(el, (tuple, list)):
-                for e in el:
-                    if not isinstance(e, str):
-                        self._raise_definition_error(
-                            "DEFINITION element must be <'str'> type, "
-                            "instead got %s %r." % (type(e), e)
-                        )
-                    if str_len(e) == 0:
-                        self._raise_definition_error(
-                            "DEFINITION element cannot be an empty string."
-                        )
-                    if set_contains(seen, e):
-                        self._raise_definition_error(
-                            "DEFINITION elements must be unique, "
-                            "instead got duplicate '%s'." % e
-                        )
-                    seen.add(e)
-                    res.append(e)
-                    count += 1
-
-            else:
-                self._raise_definition_error(
-                    "DEFINITION element must be <'str'> type, "
-                    "instead got %s %r." % (type(el), el)
-                )
-
-        # Return
-        if count == 0:
-            self._raise_definition_error("DEFINITION must have at least one element.")
-        return tuple(res)
-
-    @cython.ccall
-    def _validate_default(self, default: object) -> object:
-        """(internal) Validate the default value `<'str/None'>`."""
-        if self._elements is None or default is None:
-            return default
-        if default not in self._elements:
-            self._raise_definition_error(
-                "DEFINITION 'default' value must be one of the elements %s, "
-                "instead got %s %r." % (self._elements, type(default), default),
-            )
-        return default
-
-    # Copy ---------------------------------------------------------------------------------
-    @cython.ccall
-    def copy(self) -> Definition:
-        """Make a copy of the definition `<'Definition'>`."""
-        # ENUM
-        return self.__class__(
-            *self._elements,
-            null=self._null,
-            default=self._default,
-            charset=self._charset,
-            comment=self._comment,
-            visible=self._visible,
-        )
-
-    # Special methods ----------------------------------------------------------------------
-    def __repr__(self) -> str:
-        if self._charset is None:
-            reprs = [
-                "elements=%s" % str(self._elements),
-                "null=%s" % self._null,
-                "default=" + repr(self._default),
-                "charset=None",
-                "collate=None",
-                "comment=%r" % self._comment,
-                "visible=%s" % self._visible,
-            ]
-        else:
-            reprs = [
-                "elements=%s" % str(self._elements),
-                "null=%s" % self._null,
-                "default=" + repr(self._default),
-                "charset='%s'" % self._charset._name,
-                "collate='%s'" % self._charset._collation,
-                "comment=%r" % self._comment,
-                "visible=%s" % self._visible,
-            ]
-        return self._gen_repr(reprs)
-
-
-@cython.cclass
 class BiStringType(StringType):
     """The base class for binary string columns definition in a database table."""
 
@@ -2279,7 +2042,7 @@ class BiStringType(StringType):
         default_length: int,
         length: int | None = None,
         null: bool = False,
-        default: bytes | None = None,
+        default: object | None = None,
         comment: str | None = None,
         visible: bool = True,
     ):
@@ -2340,7 +2103,7 @@ class BiStringType(StringType):
     # Validate -----------------------------------------------------------------------------
     @cython.ccall
     def _validate_default(self, default: object) -> object:
-        """(internal) Validate the default value `<'str/None'>`."""
+        """(internal) Validate the default value `<'bytes/None'>`."""
         if default is None:
             return None
         if isinstance(default, bytes):
@@ -2422,7 +2185,7 @@ class BlobType(BiStringType):
     # Validate -----------------------------------------------------------------------------
     @cython.ccall
     def _validate_default(self, default: object) -> object:
-        """(internal) Validate the default value `<'str/None'>`."""
+        """(internal) Validate the default value `<'bytes/None'>`."""
         if default is None:
             return None
         self._raise_operational_error(
@@ -2452,6 +2215,423 @@ class BlobType(BiStringType):
         )
 
 
+@cython.cclass
+class BitType(BinaryType):
+    """The base class for bit columns definition in a database table."""
+
+    # Property -----------------------------------------------------------------------------
+    @property
+    def default(self) -> int | None:
+        """The DEFAULT value assigned to the column `<'int/None'>`."""
+        return self._default
+
+    # Metadata -----------------------------------------------------------------------------
+    @cython.ccall
+    def _sync_from_metadata(self, meta: ColumnMetadata, logs: Logs = None) -> Logs:
+        """(internal) Synchronize local configs with the remote column metadata `<'Logs'>`."""
+        # Base configs
+        logs = Definition._sync_from_metadata(self, meta, logs)
+        if logs._skip_flag:
+            return logs  # exit
+
+        # String configs
+        if self._default_length != -1:
+            length = self._read_metadata_precision(meta._numeric_precision)
+            if self._get_length() != length:
+                logs.log_config_int(self, "length", self._length, length)
+                self._length = length
+
+        # Return logs
+        return logs
+
+    @cython.ccall
+    @cython.exceptval(-1, check=False)
+    def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
+        """(internal) Check if the definition configurations are different
+        from the remote server metadata `<'int'>`.
+
+        :returns `<'int'>`:
+        - `0`: Definition configurations are identical.
+        - `1`: Definition configurations differ in more than visibility.
+        - `2`: Only the visibility differs.
+        """
+        # Different
+        diff = Definition._diff_from_metadata(self, meta)
+        if diff == 1:
+            return 1
+        # fmt: off
+        if (
+            self._default_length != -1 
+            and self._get_length() != self._read_metadata_precision(meta._numeric_precision)
+        ):
+            return 1
+        # fmt: on
+        # Same or Toggle visibility
+        return diff
+
+    # Validate -----------------------------------------------------------------------------
+    @cython.ccall
+    def _validate_default(self, default: object) -> object:
+        """(internal) Validate the default value `<'int/None'>`."""
+        if default is None:
+            return None
+
+        if isinstance(default, (bytes, bytearray, memoryview)):
+            return int.from_bytes(default, byteorder="big")
+
+        if isinstance(default, int):
+            return default
+
+        if isinstance(default, str):
+            size: cython.Py_ssize_t = str_len(default)
+            # fmt: off
+            if (
+                # default.startswith("b'")
+                str_tailmatch(default, "b'", 0, size, -1)
+                # default.endswith("'")
+                and str_tailmatch(default, "'", 0, size, 1)
+            ):
+                try:
+                    return int(str_substr(default, 2, size - 1), 2)
+                except Exception:
+                    pass
+            # fmt: on
+
+        self._raise_definition_error(
+            "DEFINITION 'default' value must be <'bytes/int'> type, "
+            "instead got %s %r." % (type(default), default),
+        )
+
+
+# . enumeration
+@cython.cclass
+class EnumeratedType(ChStringType):
+    """The base class for enumerated columns definition in a database table."""
+
+    def __init__(
+        self,
+        data_type: str,
+        elements: tuple[str],
+        maximum_elements: cython.uint,
+        null: bool = False,
+        default: object | None = None,
+        charset: object | None = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        visible: bool = True,
+    ):
+        """The base class for enumerated columns definition in a database table.
+
+        :param data_type `<'str'>`: The string representation of the MySQL data type.
+        :param elements `<'tuple[str]'>`: The enumerated elements of the column.
+        :param maximum_elements `<'int'>`: The maximum number of enumerated elements allowed.
+        :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+        :param default `<'str/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
+        :param charset `<'str/Charset/None'>`: The CHARACTER SET of the column. Defaults to `None`.
+        :param collate `<'str/None'>`: The COLLATION of the column. Defaults to `None`.
+        :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+        :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+            An invisible column hidden to queries, but can be accessed if explicitly referenced.
+        """
+        self._elements = None
+        super().__init__(
+            data_type,
+            -1,  # -1 fixed string length
+            None,  # No length for ENUM
+            null,
+            default,
+            charset,
+            collate,
+            comment,
+            visible,
+        )
+        self._elements = self._validate_elements(elements)
+        self._maximum_elements = maximum_elements
+        if self._default is not None:
+            self._default = self._validate_default(self._default)
+
+    # Generate SQL -------------------------------------------------------------------------
+    @cython.ccall
+    def _gen_definition_sql(self) -> str:
+        """(internal) Generate the definition SQL of the column `<'str'>`."""
+        sql: str = self._gen_data_type_sql()
+        if not self._null:
+            sql += " NOT NULL"
+        if self._default is not None:
+            sql += self._format_sql(" DEFAULT %s", self._default, False)
+        if self._charset is not None:
+            sql += " COLLATE %s" % self._charset._collation
+        if self._comment is not None:
+            sql += self._format_sql(" COMMENT %s", self._comment)
+        if not self._visible:
+            sql += " INVISIBLE"
+        return sql
+
+    @cython.ccall
+    def _gen_data_type_sql(self) -> str:
+        """(internal) Generate the DATA TYPE of the column `<'str'>`."""
+        els_str: str = self._escape_args(self._elements, False)
+        return self._data_type + els_str
+
+    # Metadata -----------------------------------------------------------------------------
+    @cython.ccall
+    def _sync_from_metadata(self, meta: ColumnMetadata, logs: Logs = None) -> Logs:
+        """(internal) Synchronize local configs with the remote column metadata `<'Logs'>`."""
+        # Base configs
+        logs = ChStringType._sync_from_metadata(self, meta, logs)
+        if logs._skip_flag:
+            return logs  # exit
+
+        # Enum configs
+        elements = self._read_metadata_enum_elements(meta._column_type)
+        if self._elements != elements:
+            logs.log_config_obj(self, "elements", self._elements, elements)
+            self._elements = elements
+
+        # Return logs
+        return logs
+
+    @cython.ccall
+    @cython.exceptval(-1, check=False)
+    def _diff_from_metadata(self, meta: ColumnMetadata) -> cython.int:
+        """(internal) Check if the definition configurations are different
+        from the remote server metadata `<'int'>`.
+
+        :returns `<'int'>`:
+        - `0`: Definition configurations are identical.
+        - `1`: Definition configurations differ in more than visibility.
+        - `2`: Only the visibility differs.
+        """
+        # Different
+        diff = ChStringType._diff_from_metadata(self, meta)
+        if diff == 1:
+            return 1
+        if self._elements != self._read_metadata_enum_elements(meta._column_type):
+            return 1
+        # Same or Toggle visibility
+        return diff
+
+    @cython.ccall
+    def _read_metadata_enum_elements(self, value: object) -> tuple:
+        """(internal) Read metadata ENUM elements from 'COLUMN_TYPE' `<'str'>`."""
+        if not isinstance(value, str):
+            self._raise_metadata_error(
+                "metadata 'COLUMN_TYPE' must <'str'> type, "
+                "instead got %s %r." % (type(value), value)
+            )
+        col_value: str = value
+        size: cython.Py_ssize_t = str_len(col_value)
+        # . value.startswith("ENUM('")
+        if not str_tailmatch(col_value, "%s('" % self._data_type, 0, size, -1):
+            self._raise_metadata_error(
+                "metadata 'COLUMN_TYPE' must startwith `%s('`, "
+                "instead got '%s'." % (self._data_type, value)
+            )
+        # . value.endswith(")'")
+        if not str_tailmatch(col_value, "')", 0, size, 1):
+            self._raise_metadata_error(
+                "metadata 'COLUMN_TYPE' must endwith `')`, "
+                "instead got '%s'." % (value,)
+            )
+        col_value = str_substr(col_value, str_len(self._data_type) + 2, size - 2)
+        return tuple(str_split(col_value, "','", -1))
+
+    # Validate -----------------------------------------------------------------------------
+    @cython.ccall
+    def _validate_elements(self, elements: tuple) -> tuple[str]:
+        """(internal) Validate enumeration elements `<'tuple[str]'>`."""
+        res: list = []
+        seen = set()
+        count: cython.longlong = 0
+        for el in elements:
+            if isinstance(el, str):
+                el = str_split(el, ",", -1)
+
+            if isinstance(el, (tuple, list)):
+                for e in el:
+                    if not isinstance(e, str):
+                        self._raise_definition_error(
+                            "DEFINITION element must be <'str'> type, "
+                            "instead got %s %r." % (type(e), e)
+                        )
+                    if str_len(e) == 0:
+                        self._raise_definition_error(
+                            "DEFINITION element cannot be an empty string."
+                        )
+                    if set_contains(seen, e):
+                        self._raise_definition_error(
+                            "DEFINITION elements must be unique, "
+                            "instead got duplicate '%s'." % e
+                        )
+                    seen.add(e)
+                    res.append(e)
+                    count += 1
+
+            else:
+                self._raise_definition_error(
+                    "DEFINITION element must be <'str'> type, "
+                    "instead got %s %r." % (type(el), el)
+                )
+
+        # Return
+        if count == 0:
+            self._raise_definition_error("DEFINITION must have at least one element.")
+        if self._maximum_elements > 0 and count > self._maximum_elements:
+            self._raise_definition_error(
+                "DEFINITION cannot have more than %d elements, "
+                "instead got %d." % (self._maximum_elements, count)
+            )
+        return tuple(res)
+
+    # Copy ---------------------------------------------------------------------------------
+    @cython.ccall
+    def copy(self) -> Definition:
+        """Make a copy of the definition `<'Definition'>`."""
+        # ENUM
+        return self.__class__(
+            *self._elements,
+            null=self._null,
+            default=self._default,
+            charset=self._charset,
+            comment=self._comment,
+            visible=self._visible,
+        )
+
+    # Special methods ----------------------------------------------------------------------
+    def __repr__(self) -> str:
+        if self._charset is None:
+            reprs = [
+                "elements=%s" % str(self._elements),
+                "null=%s" % self._null,
+                "default=" + repr(self._default),
+                "charset=None",
+                "collate=None",
+                "comment=%r" % self._comment,
+                "visible=%s" % self._visible,
+            ]
+        else:
+            reprs = [
+                "elements=%s" % str(self._elements),
+                "null=%s" % self._null,
+                "default=" + repr(self._default),
+                "charset='%s'" % self._charset._name,
+                "collate='%s'" % self._charset._collation,
+                "comment=%r" % self._comment,
+                "visible=%s" % self._visible,
+            ]
+        return self._gen_repr(reprs)
+
+
+@cython.cclass
+class EnumType(EnumeratedType):
+    """The base class for enumeration columns definition in a database table."""
+
+    # Validate -----------------------------------------------------------------------------
+    @cython.ccall
+    def _validate_default(self, default: object) -> object:
+        """(internal) Validate the default value `<'str/None'>`."""
+        if self._elements is None or default is None:
+            return default
+        if default not in self._elements:
+            self._raise_definition_error(
+                "DEFINITION 'default' value must be one of the elements %s, "
+                "instead got %s %r." % (self._elements, type(default), default),
+            )
+        return default
+
+
+@cython.cclass
+class SetType(EnumeratedType):
+
+    # Validate -----------------------------------------------------------------------------
+    @cython.ccall
+    def _validate_default(self, default: object) -> object:
+        """(internal) Validate the default value `<'str/None'>`."""
+        if self._elements is None or default is None:
+            return default
+        if isinstance(default, tuple):
+            elements: tuple = self._validate_elements(default)
+        else:
+            elements: tuple = self._validate_elements((default,))
+        for el in elements:
+            if el not in self._elements:
+                self._raise_definition_error(
+                    "DEFINITION 'default' elements must be subset of %s, "
+                    "instead got %s %r." % (self._elements, type(el), el),
+                )
+        return ",".join(elements)
+
+
+# . json
+@cython.cclass
+class JsonType(Definition):
+    """The base class for JSON columns definition in a database table."""
+
+    def __init__(
+        self,
+        data_type: str,
+        null: cython.bint = False,
+        comment: str | None = None,
+        visible: bool = True,
+    ):
+        """The base class for JSON columns definition in a database table.
+
+        :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+        :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+        :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+            An invisible column hidden to queries, but can be accessed if explicitly referenced.
+        """
+        super().__init__(data_type, object, null, None, comment, visible)
+
+    # Property -----------------------------------------------------------------------------
+    @property
+    def default(self) -> str | None:
+        """The DEFAULT value assigned to the column `<'str/None'>`."""
+        return "NULL" if self._null else None
+
+    # Generate SQL -------------------------------------------------------------------------
+    @cython.ccall
+    def _gen_definition_sql(self) -> str:
+        """(internal) Generate the definition SQL of the column `<'str'>`."""
+        sql: str = self._gen_data_type_sql()
+        if not self._null:
+            sql += " NOT NULL"
+        else:
+            sql += " DEFAULT NULL"
+        if self._comment is not None:
+            sql += self._format_sql(" COMMENT %s", self._comment)
+        if not self._visible:
+            sql += " INVISIBLE"
+        return sql
+
+    @cython.ccall
+    def _gen_data_type_sql(self) -> str:
+        """(internal) Generate the DATA TYPE of the column `<'str'>`."""
+        return self._data_type
+
+    # Copy ---------------------------------------------------------------------------------
+    @cython.ccall
+    def copy(self) -> Definition:
+        """Make a copy of the definition `<'Definition'>`."""
+        return self.__class__(
+            self._null,
+            self._comment,
+            self._visible,
+        )
+
+    # Special methods ----------------------------------------------------------------------
+    def __repr__(self) -> str:
+        return self._gen_repr(
+            [
+                "null=%s" % self._null,
+                "default=NULL" if self._null else "default=None",
+                "comment=%r" % self._comment,
+                "visible=%s" % self._visible,
+            ]
+        )
+
+
+# Collection
 class Define:
     """A collection of column definitions for use in database table.
 
@@ -2474,7 +2654,7 @@ class Define:
             self,
             unsigned: bool = False,
             null: bool = False,
-            default: int | None = None,
+            default: object | None = None,
             auto_increment: bool = False,
             comment: str | None = None,
             visible: bool = True,
@@ -2515,7 +2695,7 @@ class Define:
             self,
             unsigned: bool = False,
             null: bool = False,
-            default: int | None = None,
+            default: object | None = None,
             auto_increment: bool = False,
             comment: str | None = None,
             visible: bool = True,
@@ -2556,7 +2736,7 @@ class Define:
             self,
             unsigned: bool = False,
             null: bool = False,
-            default: int | None = None,
+            default: object | None = None,
             auto_increment: bool = False,
             comment: str | None = None,
             visible: bool = True,
@@ -2597,7 +2777,7 @@ class Define:
             self,
             unsigned: bool = False,
             null: bool = False,
-            default: int | None = None,
+            default: object | None = None,
             auto_increment: bool = False,
             comment: str | None = None,
             visible: bool = True,
@@ -2638,7 +2818,7 @@ class Define:
             self,
             unsigned: bool = False,
             null: bool = False,
-            default: int | None = None,
+            default: object | None = None,
             auto_increment: bool = False,
             comment: str | None = None,
             visible: bool = True,
@@ -2678,7 +2858,7 @@ class Define:
         def __init__(
             self,
             null: bool = False,
-            default: float | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2713,7 +2893,7 @@ class Define:
         def __init__(
             self,
             null: bool = False,
-            default: float | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2750,7 +2930,7 @@ class Define:
             precision: int | None = None,
             scale: int | None = None,
             null: bool = False,
-            default: Decimal | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2791,7 +2971,7 @@ class Define:
         def __init__(
             self,
             null: bool = False,
-            default: datetime.date | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2827,7 +3007,7 @@ class Define:
             null: bool = False,
             auto_init: bool = False,
             auto_update: bool = False,
-            default: datetime.datetime | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2869,7 +3049,7 @@ class Define:
             null: bool = False,
             auto_init: bool = False,
             auto_update: bool = False,
-            default: datetime.datetime | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2909,7 +3089,7 @@ class Define:
             self,
             fsp: int | None = None,
             null: bool = False,
-            default: datetime.time | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2946,7 +3126,7 @@ class Define:
         def __init__(
             self,
             null: bool = False,
-            default: int | datetime.date | datetime.datetime | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -2983,9 +3163,9 @@ class Define:
             self,
             length: int | None = None,
             null: bool = False,
-            default: str | None = None,
+            default: object | None = None,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3026,9 +3206,9 @@ class Define:
             self,
             length: int,
             null: bool = False,
-            default: str | None = None,
+            default: object | None = None,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3069,7 +3249,7 @@ class Define:
             self,
             null: bool = False,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3105,7 +3285,7 @@ class Define:
             self,
             null: bool = False,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3141,7 +3321,7 @@ class Define:
             self,
             null: bool = False,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3177,7 +3357,7 @@ class Define:
             self,
             null: bool = False,
             charset: object | None = None,
-            collate: object | None = None,
+            collate: str | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3202,48 +3382,6 @@ class Define:
                 visible,
             )
 
-    class ENUM(EnumType):
-        """Represents an `ENUM` column definition in a database table.
-
-        ## Enumeration Elements:
-        - Maximum of 65,535 distinct elements
-        """
-
-        def __init__(
-            self,
-            *elements: str,
-            null: bool = False,
-            default: str | None = None,
-            charset: object | None = None,
-            collate: object | None = None,
-            comment: str | None = None,
-            visible: bool = True,
-        ):
-            """The `ENUM` column definition in a database table.
-
-            ## Enumeration Elements:
-            - Maximum of 65,535 distinct elements
-
-            :param elements `<'*str'>`: The elements of the enumeration.
-            :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
-            :param default `<'str/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
-            :param charset `<'str/Charset/None'>`: The CHARACTER SET of the column. Defaults to `None`.
-            :param collate `<'str/None'>`: The COLLATION of the column. Defaults to `None`.
-            :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
-            :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
-                An invisible column hidden to queries, but can be accessed if explicitly referenced.
-            """
-            super().__init__(
-                "ENUM",
-                elements,
-                null,
-                default,
-                charset,
-                collate,
-                comment,
-                visible,
-            )
-
     # Binary String
     class BINARY(BinaryType):
         """Represents a `BINARY` column definition in a database table.
@@ -3256,7 +3394,7 @@ class Define:
             self,
             length: int | None = None,
             null: bool = False,
-            default: bytes | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3293,7 +3431,7 @@ class Define:
             self,
             length: int,
             null: bool = False,
-            default: bytes | None = None,
+            default: object | None = None,
             comment: str | None = None,
             visible: bool = True,
         ):
@@ -3434,6 +3572,154 @@ class Define:
             """
             super().__init__(
                 "LONGBLOB",
+                null,
+                comment,
+                visible,
+            )
+
+    class BIT(BitType):
+        """Represents a `BIT` column definition in a database table.
+
+        ## Bit Length Range:
+        - 1 to 64 bits
+        """
+
+        def __init__(
+            self,
+            length: int | None = None,
+            null: bool = False,
+            default: object | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ):
+            """The `BIT` column definition in a database table.
+
+            ## Bit Length Range:
+            - 1 to 64 bits
+
+            :param length `<'int/None'>`: The length of the bit column (1-64). Defaults to `None (1)`.
+            :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+            :param default `<'int/bytes/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
+            :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+            :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+                An invisible column hidden to queries, but can be accessed if explicitly referenced.
+            """
+            super().__init__(
+                "BIT",
+                1,
+                length,
+                null,
+                default,
+                comment,
+                visible,
+            )
+
+    # Enumerated Type
+    class ENUM(EnumType):
+        """Represents an `ENUM` column definition in a database table.
+
+        ## Enumeration Elements:
+        - Maximum of 65,535 distinct elements
+        """
+
+        def __init__(
+            self,
+            *elements: str,
+            null: bool = False,
+            default: object | None = None,
+            charset: object | None = None,
+            collate: str | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ):
+            """The `ENUM` column definition in a database table.
+
+            ## Enumeration Elements:
+            - Maximum of 65,535 distinct elements
+
+            :param elements `<'*str'>`: The elements of the enumeration.
+            :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+            :param default `<'str/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
+            :param charset `<'str/Charset/None'>`: The CHARACTER SET of the column. Defaults to `None`.
+            :param collate `<'str/None'>`: The COLLATION of the column. Defaults to `None`.
+            :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+            :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+                An invisible column hidden to queries, but can be accessed if explicitly referenced.
+            """
+            super().__init__(
+                "ENUM",
+                elements,
+                65535,
+                null,
+                default,
+                charset,
+                collate,
+                comment,
+                visible,
+            )
+
+    class SET(SetType):
+        """Represents a `SET` column definition in a database table.
+
+        ## Set Elements:
+        - Maximum of 64 distinct elements
+        """
+
+        def __init__(
+            self,
+            *elements: str,
+            null: bool = False,
+            default: object | None = None,
+            charset: object | None = None,
+            collate: str | None = None,
+            comment: str | None = None,
+            visible: bool = True,
+        ):
+            """The `SET` column definition in a database table.
+
+            ## Set Elements:
+            - Maximum of 64 distinct elements
+
+            :param elements `<'*str'>`: The elements of the set.
+            :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+            :param default `<'str/tuple[str]/None'>`: The DEFAULT value assigned to the column. Defaults to `None`.
+            :param charset `<'str/Charset/None'>`: The CHARACTER SET of the column. Defaults to `None`.
+            :param collate `<'str/None'>`: The COLLATION of the column. Defaults to `None`.
+            :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+            :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+                An invisible column hidden to queries, but can be accessed if explicitly referenced.
+            """
+            super().__init__(
+                "SET",
+                elements,
+                64,
+                null,
+                default,
+                charset,
+                collate,
+                comment,
+                visible,
+            )
+
+    # JSON Type
+    class JSON(JsonType):
+        """The `JSON` column definition in a database table."""
+
+        def __init__(
+            self,
+            null: bool = False,
+            comment: str | None = None,
+            visible: bool = True,
+        ):
+            """The `JSON` column definition in a database table.
+
+            :param null `<'bool'>`: Whether the column can contain NULL values. Defaults to `False`.
+            :param comment `<'str/None'>`: The COMMENT of the column. Defaults to `None`.
+            :param visible `<'bool'>`: The visibility of the column. Defaults to `True`.
+                An invisible column hidden to queries, but can be accessed if explicitly referenced.
+            """
+            super().__init__(
+                "JSON",
                 null,
                 comment,
                 visible,
@@ -3661,7 +3947,9 @@ class Column(Element):
         """[sync] Set or remove the default value of the column `<'Logs'>`.
 
         :param default `<'Any/None'>`: New DEFAULT value of the column.
-            To remove the existing default value, set default to `None`
+
+            - To remove the existing default value, use `default=None`.
+            - To set default value as NULL, use `default='NULL'`.
         """
         # Execute alteration
         sql: str = self._gen_set_default_sql(default)
@@ -3866,7 +4154,9 @@ class Column(Element):
         """[async] Set or remove the default value of the column `<'Logs'>`.
 
         :param default `<'Any/None'>`: New DEFAULT value of the column.
-            To remove the existing default value, set default to `None`
+
+            - To remove the existing default value, use `default=None`.
+            - To set default value as NULL, use `default='NULL'`.
         """
         # Execute alteration
         sql: str = self._gen_set_default_sql(default)
@@ -3945,7 +4235,7 @@ class Column(Element):
     @cython.ccall
     def _gen_add_sql(self, position: cython.int, columns: tuple[str]) -> str:
         """(internal) Generate SQL to add (insert) the column `<'str'>`.
-        
+
         :param position `<'int'>`: The desired ordinal position for the column.
         :param columns `<'tuple[str]'>`: All the column names (by ordinal position) of the table before modification.
         """
@@ -4079,6 +4369,11 @@ class Column(Element):
         self._assure_ready()
         if default is None:
             return "ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT;" % (
+                self._tb_qualified_name,
+                self._name,
+            )
+        elif default == "NULL":
+            return "ALTER TABLE %s ALTER COLUMN %s SET DEFAULT NULL;" % (
                 self._tb_qualified_name,
                 self._name,
             )
@@ -4323,7 +4618,7 @@ class Column(Element):
         self,
         definition: Definition,
         expression: object | None,
-        virtual: bool | None,
+        virtual: object | None,
     ) -> Column:
         """(internal) Construct a new column instance `<'Column'>`.
 
@@ -4530,7 +4825,7 @@ class GeneratedColumn(Column):
         self,
         definition: Definition,
         expression: object | None,
-        virtual: bool | None,
+        virtual: object | None,
     ) -> Column:
         """(internal) Construct a new column instance `<'Column'>`.
 
