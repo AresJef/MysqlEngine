@@ -80,10 +80,10 @@ class BaseTable(Element):
         self,
         engine: str = None,
         charset: object | None = None,
-        collate: object | None = None,
-        comment: str = None,
-        encryption: bool | None = None,
-        row_format: object = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        encryption: object | None = None,
+        row_format: str | None = None,
     ):
         """The table in a database.
 
@@ -285,7 +285,7 @@ class BaseTable(Element):
 
         :param priority `<'str/None'>`: Optional INSERT prioirty modifier. Defaults to `None`.
             Only applies to table-locking engines (MyISAM, MEMORY, MERGE). Accepts:
-            
+
             - `"LOW_PRIORITY"`: Delays the INSERT until no other clients are reading the table
                 (even those who start reading while your insert is waiting). Disables concurrent
                 inserts—so it can block for a very long time and is normally not recommended on
@@ -699,12 +699,12 @@ class BaseTable(Element):
     def _gen_alter_query(
         self,
         meta: TableMetadata,
-        engine: object | None,
+        engine: str | None,
         charset: object | None,
-        collate: object | None,
-        comment: object | None,
-        encryption: bool | None,
-        row_format: object | None,
+        collate: str | None,
+        comment: str | None,
+        encryption: object | None,
+        row_format: str | None,
     ) -> Query:
         """(interal) Generate the query to alter the table `<'Query'>`."""
         self._assure_ready()
@@ -713,9 +713,9 @@ class BaseTable(Element):
         sql: str = "ALTER TABLE " + self._tb_qualified_name
 
         # Engine
-        _engine: str = self._validate_engine(engine)
-        if _engine is not None and _engine != meta._engine:
-            sql += " ENGINE %s" % _engine
+        engine: str = self._validate_engine(engine)
+        if engine is not None and engine != meta._engine:
+            sql += " ENGINE %s" % engine
             altered = True  # set flag
 
         # Charset
@@ -1365,12 +1365,12 @@ class Table(BaseTable):
     @cython.ccall
     def Alter(
         self,
-        engine: str = None,
-        charset: object = None,
-        collate: object = None,
-        comment: str = None,
-        encryption: bool | None = None,
-        row_format: object = None,
+        engine: str | None = None,
+        charset: object | None = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        encryption: object | None = None,
+        row_format: str | None = None,
     ) -> Logs:
         """[sync] Alter the table `<'Logs'>`.
 
@@ -1778,12 +1778,12 @@ class Table(BaseTable):
 
     async def aioAlter(
         self,
-        engine: str = None,
-        charset: object = None,
-        collate: object = None,
-        comment: str = None,
-        encryption: bool | None = None,
-        row_format: object = None,
+        engine: str | None = None,
+        charset: object | None = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        encryption: object | None = None,
+        row_format: str | None = None,
     ) -> Logs:
         """[async] Alter the table `<'Logs'>`.
 
@@ -2121,10 +2121,10 @@ class TimeTable(Table):
         start_from: object,
         end_with: object,
         charset: object | None = None,
-        collate: object | None = None,
-        comment: str = None,
-        encryption: bool | None = None,
-        row_format: object = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        encryption: object | None = None,
+        row_format: str | None = None,
     ):
         """The time-series partitioned table with automatic range partitions.
 
@@ -3105,7 +3105,7 @@ class TimeTable(Table):
         if self._time_unit == utils.TIMETABLE_UNIT.QUARTER:
             return "q%04d%d" % (
                 datetime.datetime_year(time),
-                time._prop_quarter(),
+                time.access_quarter(),
             )
         if self._time_unit == utils.TIMETABLE_UNIT.MONTH:
             return "m%04d%02d" % (
@@ -3567,11 +3567,11 @@ class TempTable(BaseTable):
 
     def __init__(
         self,
-        engine: str = None,
+        engine: str | None = None,
         charset: object | None = None,
-        collate: object | None = None,
-        comment: str = None,
-        row_format: object = None,
+        collate: str | None = None,
+        comment: str | None = None,
+        row_format: str | None = None,
     ):
         """The temporary table in a database.
 

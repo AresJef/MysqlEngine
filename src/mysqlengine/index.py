@@ -45,8 +45,8 @@ class Index(Element):
     def __init__(
         self,
         *columns: str,
-        index_type: str = None,
-        comment: str = None,
+        index_type: str | None = None,
+        comment: str | None = None,
         visible: cython.bint = True,
     ):
         """The index in a database table.
@@ -866,8 +866,8 @@ class FullTextIndex(Index):
     def __init__(
         self,
         *columns: str,
-        parser: object = None,
-        comment: str = None,
+        parser: str | None = None,
+        comment: str | None = None,
         visible: bool = True,
     ):
         """The full text index in a database table.
@@ -1341,7 +1341,7 @@ class IndexMetadata(Metadata):
     @property
     def index_type(self) -> str:
         """The algorithm of the index `<'str'>`.
-        
+
         e.g.: `"BTREE"`, `"HASH"`, `"FULLTEXT"`
         """
         return self._index_type

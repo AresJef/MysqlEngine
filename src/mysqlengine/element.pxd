@@ -1,5 +1,4 @@
 # cython: language_level=3
-from sqlcycli.sqlfunc cimport ObjStr
 from sqlcycli.charset cimport Charset
 from sqlcycli.connection cimport Cursor
 from sqlcycli.aio.pool cimport (
@@ -8,6 +7,7 @@ from sqlcycli.aio.pool cimport (
     PoolConnectionManager,
     PoolTransactionManager,
 )
+from sqlcycli.transcode cimport ObjStr
 
 # Element
 cdef class Element(ObjStr):
@@ -44,7 +44,7 @@ cdef class Element(ObjStr):
     cpdef bint _set_tb_name(self, object name) except -1
     cpdef bint _set_db_name(self, object name) except -1
     cpdef bint _set_tb_qualified_name(self) except -1
-    cpdef bint _set_charset(self, object charset=?, object collate=?) except -1
+    cpdef bint _set_charset(self, object charset=?, str collate=?) except -1
     cpdef bint _set_pool(self, object pool) except -1
     cpdef bint _set_position(self, int position) except -1
     # Assure Ready
@@ -65,7 +65,7 @@ cdef class Element(ObjStr):
     cdef inline str _validate_partition_name(self, object name)
     cdef inline tuple _validate_columns(self, object columns)
     cdef inline Pool _validate_pool(self, object pool)
-    cdef inline Charset _validate_charset(self, object charset=?, object collate=?)
+    cdef inline Charset _validate_charset(self, object charset=?, str collate=?)
     cdef inline Charset _validate_encoding(self, Charset charset)
     cdef inline str _validate_index_type(self, object row_format)
     cdef inline str _validate_comment(self, object comment)

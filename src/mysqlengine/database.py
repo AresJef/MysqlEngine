@@ -55,8 +55,8 @@ class Database(Element):
         name: str,
         pool: Pool,
         charset: object = "utf8mb4",
-        collate: object = None,
-        encryption: bool | None = None,
+        collate: str | None = None,
+        encryption: object | None = None,
     ):
         """The database.
 
@@ -207,7 +207,7 @@ class Database(Element):
 
         :param priority `<'str/None'>`: Optional INSERT prioirty modifier. Defaults to `None`.
             Only applies to table-locking engines (MyISAM, MEMORY, MERGE). Accepts:
-            
+
             - `"LOW_PRIORITY"`: Delays the INSERT until no other clients are reading the table
                 (even those who start reading while your insert is waiting). Disables concurrent
                 inserts—so it can block for a very long time and is normally not recommended on
@@ -745,9 +745,9 @@ class Database(Element):
     @cython.ccall
     def Alter(
         self,
-        charset: object = None,
-        collate: object = None,
-        encryption: bool | None = None,
+        charset: object | None = None,
+        collate: str | None = None,
+        encryption: object | None = None,
         read_only: bool | None = None,
     ) -> Logs:
         """[sync] Alter the database `<'Logs'>`.
@@ -955,9 +955,9 @@ class Database(Element):
 
     async def aioAlter(
         self,
-        charset: object = None,
-        collate: object = None,
-        encryption: bool | None = None,
+        charset: object | None = None,
+        collate: str | None = None,
+        encryption: object | None = None,
         read_only: bool | None = None,
     ) -> Logs:
         """[async] Alter the database `<'Logs'>`.
@@ -1134,8 +1134,8 @@ class Database(Element):
         self,
         meta: DatabaseMetadata,
         charset: object | None,
-        collate: object | None,
-        encryption: bool | None,
+        collate: str | None,
+        encryption: object | None,
         read_only: bool | None,
     ) -> Query:
         """(interal) Generate the query to alter the database `<'Query'>`."""

@@ -19,9 +19,8 @@ from cython.cimports.cpython.dict import PyDict_SetItem as dict_setitem  # type:
 from cython.cimports.cpython.dict import PyDict_Contains as dict_contains  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_GET_LENGTH as str_len  # type: ignore
 from cython.cimports.cpython.unicode import PyUnicode_Contains as str_contains  # type: ignore
-from cython.cimports.sqlcycli.sqlfunc import ObjStr  # type: ignore
 from cython.cimports.sqlcycli.charset import Charset  # type: ignore
-from cython.cimports.sqlcycli.transcode import escape as _escape  # type: ignore
+from cython.cimports.sqlcycli.transcode import escape as _escape, ObjStr  # type: ignore
 from cython.cimports.sqlcycli.utils import format_sql as _format_sql  # type: ignore
 from cython.cimports.sqlcycli.connection import Cursor  # type: ignore
 from cython.cimports.sqlcycli.aio.connection import Cursor as AioCursor  # type: ignore
@@ -41,9 +40,7 @@ import datetime
 from typing import Iterator
 from warnings import warn as _warn
 from sqlcycli import errors as sqlerrors
-from sqlcycli.sqlfunc import ObjStr
 from sqlcycli.charset import Charset
-from sqlcycli.transcode import escape as _escape
 from sqlcycli.connection import Cursor
 from sqlcycli.aio.connection import Cursor as AioCursor
 from sqlcycli.aio.pool import (
@@ -53,6 +50,8 @@ from sqlcycli.aio.pool import (
     PoolConnectionManager,
     PoolTransactionManager,
 )
+from sqlcycli.transcode import escape as _escape, ObjStr
+from sqlcycli.utils import format_sql as _format_sql
 from mysqlengine import utils, errors
 
 
@@ -407,8 +406,8 @@ class Element(ObjStr):
     @cython.exceptval(-1, check=False)
     def _set_charset(
         self,
-        charset: object = None,
-        collate: object = None,
+        charset: object | None = None,
+        collate: str | None = None,
     ) -> cython.bint:
         """(internal) Set the charset of the element.
 
@@ -671,8 +670,8 @@ class Element(ObjStr):
     @cython.inline(True)
     def _validate_charset(
         self,
-        charset: object = None,
-        collate: object = None,
+        charset: object | None = None,
+        collate: str | None = None,
     ) -> Charset:
         """(internal) Validate CHARACTER SET and COLLATION (optional) `<'Charset/None'>`.
 
@@ -695,7 +694,7 @@ class Element(ObjStr):
         if charset is None:
             self._raise_critical_error("charset cannot be None.")
         self._assure_pool_ready()
-        if charset._encoding_c != self._pool._charset._encoding_c:
+        if charset._encoding_ptr != self._pool._charset._encoding_ptr:
             self._raise_definition_error(
                 "charset encoding must be the same as the connection pool.\n"
                 "<'%s'> encoding (%s) vs <'Pool'> encoding (%s)\n"
@@ -1012,7 +1011,7 @@ class Element(ObjStr):
         """(internal) Format the SQL with the given arguments `<'str'>`.
 
         :param sql `<'str'>`: The SQL statement to format.
-        
+
         :param args `<'Any'>`: Arguments to escape, supports:
 
             - **Python built-ins**:

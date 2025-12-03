@@ -24,7 +24,7 @@ cdef class Database(Element):
     cpdef Logs Create(self, bint if_not_exists=?)
     cpdef bint Exists(self) except -1
     cpdef Logs Drop(self, bint if_exists=?)
-    cpdef Logs Alter(self, object charset=?, object collate=?, object encryption=?, object read_only=?)
+    cpdef Logs Alter(self, object charset=?, str collate=?, object encryption=?, bool read_only=?)
     cpdef DatabaseMetadata ShowMetadata(self)
     cpdef Logs SyncFromRemote(self, bint thorough=?)
     cpdef Logs SyncToRemote(self)
@@ -32,7 +32,7 @@ cdef class Database(Element):
     cpdef str _gen_create_sql(self, bint if_not_exists)
     cpdef str _gen_exists_sql(self)
     cpdef str _gen_drop_sql(self, bint if_exists)
-    cpdef Query _gen_alter_query(self, DatabaseMetadata meta, object charset, object collate, object encryption, object read_only)
+    cpdef Query _gen_alter_query(self, DatabaseMetadata meta, object charset, str collate, object encryption, bool read_only)
     cpdef str _gen_show_metadata_sql(self)
     cpdef str _gen_lock_sql(self, tuple tables, bint lock_for_read)
     # Metadata

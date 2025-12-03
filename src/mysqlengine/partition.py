@@ -2145,12 +2145,12 @@ class Partition(Element):
     _subpartitions: Partitions
     _is_subpartition: cython.bint
 
-    def __init__(self, name: object, *values: object, comment: str = None):
+    def __init__(self, name: object, *values: object, comment: str | None = None):
         """The partition in a database table.
 
         :param name `<'str'>`: The name of the partition.
         :param values `<'str/Any'>`: The values of the partition.
-        :param comment `<'str'>`: The COMMENT of the partition. Defaults to `None`.
+        :param comment `<'str/None'>`: The COMMENT of the partition. Defaults to `None`.
         """
         super().__init__("PARTITION", "PARTITION")
         self._name = self._validate_partition_name(name)

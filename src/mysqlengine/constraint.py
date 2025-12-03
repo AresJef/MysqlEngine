@@ -181,7 +181,7 @@ class Constraint(Element):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -199,9 +199,9 @@ class Constraint(Element):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -375,7 +375,7 @@ class Constraint(Element):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -393,9 +393,9 @@ class Constraint(Element):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -534,7 +534,7 @@ class Constraint(Element):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -550,9 +550,9 @@ class Constraint(Element):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -748,7 +748,7 @@ class Constraint(Element):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -766,9 +766,9 @@ class Constraint(Element):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: The COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: The parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: The parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: The columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -801,8 +801,8 @@ class UniqueKey(Constraint):
     def __init__(
         self,
         *columns: str,
-        index_type: str = None,
-        comment: str = None,
+        index_type: str | None = None,
+        comment: str | None = None,
         visible: cython.bint = True,
     ):
         """The UNIQUE KEY constraint in a database table.
@@ -998,7 +998,7 @@ class UniqueKey(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1014,9 +1014,9 @@ class UniqueKey(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -1209,7 +1209,7 @@ class UniqueKey(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1227,9 +1227,9 @@ class UniqueKey(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: The COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: The parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: The parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: The columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -1264,7 +1264,7 @@ class UniqueKey(Constraint):
 class PrimaryKey(UniqueKey):
     """Represents a PRIMARY KEY constraint in a database table."""
 
-    def __init__(self, *columns: str, index_type: str = None, comment: str = None):
+    def __init__(self, *columns: str, index_type: str = None, comment: str | None = None):
         """The PRIMARY KEY constraint in a database table.
 
         :param columns `<'*str'>`: The column names of the primary key (index).
@@ -1378,7 +1378,7 @@ class PrimaryKey(UniqueKey):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1394,9 +1394,9 @@ class PrimaryKey(UniqueKey):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -1444,7 +1444,7 @@ class PrimaryKey(UniqueKey):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1462,9 +1462,9 @@ class PrimaryKey(UniqueKey):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: The COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: The parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: The parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: The columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -1702,7 +1702,7 @@ class ForeignKey(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1718,9 +1718,9 @@ class ForeignKey(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -1900,7 +1900,7 @@ class ForeignKey(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -1918,9 +1918,9 @@ class ForeignKey(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: The COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: The parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: The parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: The columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -2112,7 +2112,7 @@ class Check(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -2128,9 +2128,9 @@ class Check(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: New COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: New parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: New parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: New columns in the referenced table.
             Only applicable to <'ForeignKey'>.
@@ -2272,7 +2272,7 @@ class Check(Constraint):
         index_type: str | None,
         comment: str | None,
         visible: bool | None,
-        reference_table: str | None,
+        reference_table: object | None,
         reference_columns: object | None,
         on_delete: str | None,
         on_update: str | None,
@@ -2290,9 +2290,9 @@ class Check(Constraint):
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
         :param comment `<'str/None'>`: The COMMENT of the constraint.
             Only applicable to <'UniqueKey'> and <'PrimaryKey'>.
-        :param visible `<'bool'>`: The visibility of the index.
+        :param visible `<'bool/None'>`: The visibility of the index.
             Only applicable to <'UniqueKey'>.
-        :param reference_table `<'str/None'>`: The parent table for FOREIGN KEY.
+        :param reference_table `<'str/Table/None'>`: The parent table for FOREIGN KEY.
             Only applicable to <'ForeignKey'>.
         :param reference_columns `<'str/Column/tuple/list/None'>`: The columns in the referenced table.
             Only applicable to <'ForeignKey'>.

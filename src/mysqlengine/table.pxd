@@ -39,7 +39,7 @@ cdef class BaseTable(Element):
     cpdef str _gen_truncate_sql(self)
     cpdef str _gen_drop_sql(self, bint if_exists)
     cpdef str _gen_empty_sql(self)
-    cpdef Query _gen_alter_query(self, TableMetadata meta, object engine, object charset, object collate, object comment, object encryption, object row_format)
+    cpdef Query _gen_alter_query(self, TableMetadata meta, str engine, object charset, str collate, str comment, object encryption, str row_format)
     cpdef str _gen_show_metadata_sql(self)
     cpdef str _gen_show_column_names_sql(self)
     cpdef str _gen_show_index_names_sql(self)
@@ -52,7 +52,7 @@ cdef class BaseTable(Element):
     # Metadata
     cpdef Logs _sync_from_metadata(self, TableMetadata meta, Logs logs=?)
     # Setter
-    cpdef bint setup(self, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str db_name, object charset, str collate, object pool) except -1
     # Assure Ready
     cdef inline bint _assure_setup_ready(self) except -1
     # Validate
@@ -70,7 +70,7 @@ cdef class Table(BaseTable):
     cpdef Logs Truncate(self)
     cpdef Logs Drop(self, bint if_exists=?)
     cpdef bint Empty(self) except -1
-    cpdef Logs Alter(self, str engine=?, object charset=?, object collate=?, str comment=?, object encryption=?, object row_format=?)
+    cpdef Logs Alter(self, str engine=?, object charset=?, str collate=?, str comment=?, object encryption=?, str row_format=?)
     cpdef TableMetadata ShowMetadata(self)
     cpdef tuple ShowColumnNames(self)
     cpdef tuple ShowIndexNames(self)
@@ -149,7 +149,7 @@ cdef class TempTableManager:
 # Tables
 cdef class Tables(Elements):
     # Setter
-    cpdef bint setup(self, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str db_name, object charset, str collate, object pool) except -1
     # Copy
     cpdef Tables copy(self)
 

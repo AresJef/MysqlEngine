@@ -51,7 +51,7 @@ cdef class Partitioning(Element):
     cpdef Logs _sync_from_metadata(self, PartitioningMetadata meta, Logs logs=?)
     cpdef bint _diff_from_metadata(self, PartitioningMetadata meta) except -1
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     cpdef bint _set_partitioning_flag(self, int flag) except -1
     cpdef bint _set_partitions_by_instance(self, tuple partitions) except -1
     cpdef bint _set_partitions_by_integer(self, int partitions) except -1
@@ -80,7 +80,7 @@ cdef class Partition(Element):
     # Metadata
     cpdef Logs _sync_from_metadata(self, dict meta, Logs logs=?)
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     cpdef bint _set_partitioning_flag(self, int flag) except -1
     cpdef bint _setup_subpartitions(self, int flag, int subpartitions) except -1
     cpdef bint _reset_subpartitions(self) except -1
@@ -101,7 +101,7 @@ cdef class Partitions(Elements):
     # Generate SQL
     cpdef str _gen_definition_sql(self, int indent=?)
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     cpdef bint _set_partitioning_flag(self, int flag) except -1
     cpdef bint _setup_subpartitions(self, int flag, int subpartitions) except -1
     cpdef bint _reset_subpartitions(self) except -1

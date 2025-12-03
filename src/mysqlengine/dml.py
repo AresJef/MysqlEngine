@@ -1709,8 +1709,8 @@ class DML:
     def _gen_where_clause(
         self,
         conds: tuple,
-        in_conds: dict | None = None,
-        not_in_conds: dict | None = None,
+        in_conds: object | None = None,
+        not_in_conds: object | None = None,
     ) -> WHERE:
         """(internal) Generate the WHERE clause `<'WHERE'>`.
 
@@ -1788,8 +1788,8 @@ class DML:
     def _gen_having_clause(
         self,
         conds: tuple,
-        in_conds: dict | None = None,
-        not_in_conds: dict | None = None,
+        in_conds: object | None = None,
+        not_in_conds: object | None = None,
     ) -> HAVING:
         """(internal) Generate the HAVING clause `<'HAVING'>`.
 
@@ -1841,7 +1841,7 @@ class DML:
         name: object,
         partition_by: object | None = None,
         order_by: object | None = None,
-        frame_clause: str | None = None,
+        frame_clause: str | object | None = None,
     ) -> WINDOW:
         """(internal) Generate the WINDOW clause `<'WINDOW'>`.
 
@@ -2550,7 +2550,7 @@ class DML:
     def _Execute(
         self,
         args: object = None,
-        cursor: type | None = None,
+        cursor: object | None = None,
         fetch: cython.bint = True,
         many: cython.bint = False,
         conn: object | None = None,
@@ -4337,7 +4337,7 @@ class SelectDML(DML):
     def Execute(
         self,
         args: object | None = None,
-        cursor: type | None = None,
+        cursor: object | None = None,
         fetch: cython.bint = True,
         conn: object | None = None,
     ) -> object:

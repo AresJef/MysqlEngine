@@ -24,9 +24,9 @@ cdef class Constraint(Element):
     cpdef bint Exists(self) except -1
     cpdef Logs Drop(self)
     cpdef Logs _Alter(
-        self, object columns, object index_type, object comment, object visible, 
-        object reference_table, object reference_columns, object on_delete, object on_update,
-        object expression, object enforced,
+        self, object columns, str index_type, str comment, bool visible, 
+        object reference_table, object reference_columns, str on_delete, str on_update,
+        object expression, bool enforced,
     )
     cpdef ConstraintMetadata ShowMetadata(self)
     cpdef tuple ShowConstraintSymbols(self)
@@ -39,9 +39,9 @@ cdef class Constraint(Element):
     cpdef str _gen_drop_sql(self)
     cpdef Query _gen_alter_query(
         self, ConstraintMetadata meta,
-        object columns, object index_type, object comment, object visible,
-        object reference_table, object reference_columns, object on_delete, object on_update,
-        object expression, object enforced,
+        object columns, str index_type, str comment, bool visible,
+        object reference_table, object reference_columns, str on_delete, str on_update,
+        object expression, bool enforced,
     )
     cpdef str _gen_show_metadata_sql(self)
     cpdef str _gen_show_constraint_symbols_sql(self)
@@ -49,14 +49,14 @@ cdef class Constraint(Element):
     cpdef Logs _sync_from_metadata(self, ConstraintMetadata meta, Logs logs=?)
     cpdef int _diff_from_metadata(self, ConstraintMetadata meta) except -1
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     cpdef bint _set_symbol(self) except -1
     # Copy
     cpdef Constraint copy(self)
     cpdef Constraint _construct(
-        self, object columns, object index_type, object comment, object visible,
-        object reference_table, object reference_columns, object on_delete, object on_update,
-        object expression, object enforced,
+        self, object columns, str index_type, str comment, bool visible,
+        object reference_table, object reference_columns, str on_delete, str on_update,
+        object expression, bool enforced,
     )
 
 cdef class UniqueKey(Constraint):
@@ -81,7 +81,7 @@ cdef class Check(Constraint):
 # Constraints
 cdef class Constraints(Elements):
     # Setter
-    cpdef bint setup(self, str tb_name, str db_name, object charset, object collate, object pool) except -1
+    cpdef bint setup(self, str tb_name, str db_name, object charset, str collate, object pool) except -1
     # Copy
     cpdef Constraints copy(self)
 

@@ -135,7 +135,7 @@ cdef inline str validate_partition_name(object name):
     """
     return _validate_element_name("PARTITION", name, True)
 
-cdef inline Charset validate_charset(object charset=None, object collate=None):
+cdef inline Charset validate_charset(object charset=None, str collate=None):
     """Validate the CHARACTER SET and COLLATE `<'Charset/None'>`
     
     :param charset `<'str/Charset/None'>`: The character set. Defaults to `None`.
@@ -561,9 +561,7 @@ ctypedef enum TIMETABLE_UNIT:
 
 cdef inline str validate_timetable_unit(object unit):
     """Validate MySQL storage engine `<'str/None'>`."""
-    return _validate_dict_option(
-        unit, TIMETABLE_UNITS, "time unit"
-    )
+    return _validate_dict_option(unit, TIMETABLE_UNITS, "time unit")
 
 cdef inline str timetable_unit_flag_to_str(int flag):
     """Convert time table unit integer flag to its corresponding string representation `<'str'>`."""
