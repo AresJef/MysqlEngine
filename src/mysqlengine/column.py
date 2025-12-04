@@ -1249,7 +1249,11 @@ class DateAndTimeType(TemporalType):
         """(internal) Validate the default value `<'datetime.datetime/None'>`."""
         if Definition._validate_default(self, default) is None:
             return None
-        if self._auto_init and default == "CURRENT_TIMESTAMP":
+        if (
+            self._auto_init
+            and isinstance(default, str)
+            and str_tailmatch(default, "CURRENT_TIMESTAMP", 0, str_len(default), -1)
+        ):
             return None
         try:
             return Pydt.parse(default)
