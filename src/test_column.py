@@ -415,6 +415,11 @@ class TestColumnDefinition(TestCase):
             # auto_init
             d = self.setup_definition(dtype(**(args_base | {"auto_init": True})))
             self.assertDefinition(d, f"{d.data_type} NOT NULL DEFAULT CURRENT_TIMESTAMP")
+            # auto_init & fsp
+            d = self.setup_definition(dtype(**(args_base | {"fsp": 5, "auto_init": True})))
+            self.assertDefinition(d, f"{d.data_type}(5) NOT NULL DEFAULT CURRENT_TIMESTAMP(5)")
+            d = self.setup_definition(dtype(**(args_base | {"fsp": 6, "auto_init": True})))
+            self.assertDefinition(d, f"{d.data_type}(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)")
             # auto_update
             d = self.setup_definition(dtype(**(args_base | {"auto_update": True})))
             self.assertDefinition(d, f"{d.data_type} NOT NULL ON UPDATE CURRENT_TIMESTAMP")
