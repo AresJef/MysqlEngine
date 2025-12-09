@@ -204,7 +204,7 @@ class TimeTable(Table):
             "YEAR", "QUARTER", "MONTH", "WEEK", "DAY", "HOUR", "MINUTE", "SECOND"
         ],
         start_from: str | datetime.date | datetime.datetime,
-        end_with: str | datetime.date | datetime.datetime | None = None,
+        end_with: str | datetime.date | datetime.datetime,
         charset: str | Charset | None = None,
         collate: str | None = None,
         comment: str | None = None,
