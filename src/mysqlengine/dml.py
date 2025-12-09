@@ -2622,7 +2622,7 @@ class DML:
         with self._pool.acquire() as conn:
             if self._multi_table:
                 conn.select_database(self._db_name)
-            with conn.transaction() as cur:
+            with conn.transaction(cursor) as cur:
                 rows = cur.execute(stmt, args, many)
                 return cur.fetchall() if fetch else rows
 
