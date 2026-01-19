@@ -165,6 +165,7 @@ class SelectDML(DML):
             type[Cursor | DictCursor | DfCursor | tuple | dict | DataFrame] | None
         ) = None,
         fetch: bool = True,
+        fetch_all: bool = True,
         conn: PoolSyncConnection | None = None,
     ) -> tuple[tuple] | tuple[dict] | DataFrame | int: ...
     async def aioExecute(
@@ -175,6 +176,7 @@ class SelectDML(DML):
             | None
         ) = None,
         fetch: bool = True,
+        fetch_all: bool = True,
         conn: PoolConnection | None = None,
     ) -> tuple[tuple] | tuple[dict] | DataFrame | int: ...
 

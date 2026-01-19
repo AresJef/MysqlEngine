@@ -2552,6 +2552,7 @@ class DML:
         args: object = None,
         cursor: object | None = None,
         fetch: cython.bint = True,
+        fetch_all: cython.bint = True,
         many: cython.bint = False,
         conn: object | None = None,
     ) -> object:
@@ -2584,6 +2585,10 @@ class DML:
             If 'fetch=False', the statement will be executed but no results will be fetched.
             Instead returns the number of affected rows.
 
+        :param fetch_all `<'bool'>`: Whether to fetch all the result set. Defaults to `True`.
+            Only applicable when 'fetch=True'. If 'fetch_one=True', fetches the entire result set.
+            Else, only one row will be fetched from the result set.
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -2610,7 +2615,12 @@ class DML:
                 conn.select_database(self._db_name)
             with conn.cursor(cursor) as cur:
                 rows = cur.execute(stmt, args, many)
-                return cur.fetchall() if fetch else rows
+                if not fetch:
+                    return rows
+                elif fetch_all:
+                    return cur.fetchall()
+                else:
+                    return cur.fetchone()
 
         # Validate connection requirement
         if self._require_conn:
@@ -2624,13 +2634,19 @@ class DML:
                 conn.select_database(self._db_name)
             with conn.transaction(cursor) as cur:
                 rows = cur.execute(stmt, args, many)
-                return cur.fetchall() if fetch else rows
+                if not fetch:
+                    return rows
+                elif fetch_all:
+                    return cur.fetchall()
+                else:
+                    return cur.fetchone()
 
     async def _aioExecute(
         self,
         args: object = None,
         cursor: type | None = None,
         fetch: cython.bint = True,
+        fetch_all: cython.bint = True,
         many: cython.bint = False,
         conn: object | None = None,
         batch: cython.bint = False,
@@ -2664,6 +2680,10 @@ class DML:
             If 'fetch=False', the statement will be executed but no results will be fetched.
             Instead returns the number of affected rows.
 
+        :param fetch_all `<'bool'>`: Whether to fetch all the result set. Defaults to `True`.
+            Only applicable when 'fetch=True'. If 'fetch_one=True', fetches the entire result set.
+            Else, only one row will be fetched from the result set.
+
         :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
             For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
 
@@ -2693,7 +2713,12 @@ class DML:
                 await conn.select_database(self._db_name)
             async with conn.cursor(cursor) as cur:
                 rows = await cur.execute(stmt, args, many)
-                return await cur.fetchall() if fetch else rows
+                if not fetch:
+                    return rows
+                elif fetch_all:
+                    return await cur.fetchall()
+                else:
+                    return await cur.fetchone()
 
         # Validate connection requirement
         if self._require_conn:
@@ -2709,7 +2734,12 @@ class DML:
                     await conn.select_database(self._db_name)
                 async with conn.transaction(cursor) as cur:
                     rows = await cur.execute(stmt, args, many)
-                    return await cur.fetchall() if fetch else rows
+                    if not fetch:
+                        return rows
+                    elif fetch_all:
+                        return await cur.fetchall()
+                    else:
+                        return await cur.fetchone()
 
         # <-> single-row
         args_escaped = _escape(args, many, True)
@@ -4339,6 +4369,7 @@ class SelectDML(DML):
         args: object | None = None,
         cursor: object | None = None,
         fetch: cython.bint = True,
+        fetch_all: cython.bint = True,
         conn: object | None = None,
     ) -> object:
         """[sync] Execute the SELECT statement, and fetch all the results.
@@ -4371,6 +4402,10 @@ class SelectDML(DML):
             Instead returns the number of selected rows. This is useful when you want to execute a
             statement that the result set is not needed (e.g., FOR UPDATE). This is normally used
             in a transaction with 'conn' specified.
+
+        :param fetch_all `<'bool'>`: Whether to fetch all the result set. Defaults to `True`.
+            Only applicable when 'fetch=True'. If 'fetch_one=True', fetches the entire result set.
+            Else, only one row will be fetched from the result set.
 
         :param conn `<'PoolSyncConnection/None'>`: The specific [sync] connection to execute the statement. Defaults to `None`.
             If 'conn=None', the statement will be executed by a (random) connection
@@ -4415,13 +4450,14 @@ class SelectDML(DML):
             UPDATE ...;
             COMMIT;
         """
-        return self._Execute(args, cursor, fetch, False, conn)
+        return self._Execute(args, cursor, fetch, fetch_all, False, conn)
 
     async def aioExecute(
         self,
         args: object | None = None,
         cursor: type | None = None,
         fetch: cython.bint = True,
+        fetch_all: cython.bint = True,
         conn: object | None = None,
     ) -> object:
         """[async] Execute the SELECT statement, and fetch all the results.
@@ -4454,6 +4490,10 @@ class SelectDML(DML):
             Instead returns the number of selected rows. This is useful when you want to execute a
             statement that the result set is not needed (e.g., FOR UPDATE). This is normally used
             in a transaction with 'conn' specified.
+
+        :param fetch_all `<'bool'>`: Whether to fetch all the result set. Defaults to `True`.
+            Only applicable when 'fetch=True'. If 'fetch_one=True', fetches the entire result set.
+            Else, only one row will be fetched from the result set.
 
         :param conn `<'PoolConnection/None'>`: The specific [async] connection to execute the statement. Defaults to `None`.
             If 'conn=None', the statement will be executed by a (random) connection
@@ -4497,7 +4537,9 @@ class SelectDML(DML):
             UPDATE ...;
             COMMIT;
         """
-        return await self._aioExecute(args, cursor, fetch, False, conn, False)
+        return await self._aioExecute(
+            args, cursor, fetch, fetch_all, False, conn, False
+        )
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -5637,7 +5679,7 @@ class InsertDML(DML):
             INSERT INTO db.tb VALUES (...);
             COMMIT;
         """
-        return self._Execute(args, None, False, many, conn)
+        return self._Execute(args, None, False, False, many, conn)
 
     async def aioExecute(
         self,
@@ -5705,7 +5747,7 @@ class InsertDML(DML):
             COMMIT;
         """
         batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
-        return await self._aioExecute(args, None, False, many, conn, batch)
+        return await self._aioExecute(args, None, False, False, many, conn, batch)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -6721,7 +6763,7 @@ class ReplaceDML(DML):
             REPLACE INTO db.tb VALUES (...);
             COMMIT;
         """
-        return self._Execute(args, None, False, many, conn)
+        return self._Execute(args, None, False, False, many, conn)
 
     async def aioExecute(
         self,
@@ -6789,7 +6831,7 @@ class ReplaceDML(DML):
             COMMIT;
         """
         batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
-        return await self._aioExecute(args, None, False, many, conn, batch)
+        return await self._aioExecute(args, None, False, False, many, conn, batch)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -7468,7 +7510,7 @@ class UpdateDML(DML):
             WHERE id=1;
             COMMIT;
         """
-        return self._Execute(args, None, False, many, conn)
+        return self._Execute(args, None, False, False, many, conn)
 
     async def aioExecute(
         self,
@@ -7553,7 +7595,7 @@ class UpdateDML(DML):
             WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn, False)
+        return await self._aioExecute(args, None, False, False, many, conn, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -8192,7 +8234,7 @@ class DeleteDML(DML):
             DELETE FROM db.tb AS t0 WHERE id=1;
             COMMIT;
         """
-        return self._Execute(args, None, False, many, conn)
+        return self._Execute(args, None, False, False, many, conn)
 
     async def aioExecute(
         self,
@@ -8267,7 +8309,7 @@ class DeleteDML(DML):
             DELETE FROM db.tb AS t0 WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, many, conn, False)
+        return await self._aioExecute(args, None, False, False, many, conn, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc

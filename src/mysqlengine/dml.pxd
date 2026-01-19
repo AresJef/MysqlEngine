@@ -278,7 +278,7 @@ cdef class DML:
     cdef inline str _gen_select_statement(self, str pad=?)
     cdef inline str _gen_select_subquery(self, str pad=?)
     # Execute
-    cpdef object _Execute(self, object args=?, object cursor=?, bint fetch=?, bint many=?, object conn=?)
+    cpdef object _Execute(self, object args=?, object cursor=?, bint fetch=?, bint fetch_all=?, bint many=?, object conn=?)
     # Validate
     cdef inline str _validate_element_name(self, str name, str msg)
     cdef inline str _validate_element(self, object element, str msg)
@@ -309,7 +309,7 @@ cdef class SelectDML(DML):
     # Statement
     cpdef str statement(self, int indent=?)
     # Execute
-    cpdef object Execute(self, object args=?, object cursor=?, bint fetch=?, object conn=?)
+    cpdef object Execute(self, object args=?, object cursor=?, bint fetch=?, bint fetch_all=?, object conn=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 
