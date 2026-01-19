@@ -4,6 +4,6 @@ requires = [
     "wheel>=0.41.0",
     "Cython==3.2.1",
     "numpy>=1.25.2",
-    "sqlcycli>=2.0.2",
+    "sqlcycli>=2.0.3",
 ]
 build-backend = "setuptools.build_meta"
