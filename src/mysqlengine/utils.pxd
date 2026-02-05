@@ -389,23 +389,13 @@ cdef inline object read_bool_config(int value):
 cdef inline str cleanup_expression(str expr):
     """Clean MySQL expression `<'str/None'>`
     
-    - If the expression starts with "(" and ends with ")",
-      the parentheses will first be removed.
     - Remove all leading and trailing whitespaces.
     """
     if expr is None:
         return None
+
     expr = expr.strip()
-    cdef Py_ssize_t size = str_len(expr)
-    if size == 0:
-        return None
-    if (
-        str_tailmatch(expr, "(", 0, size, -1)  # expr.startwith("(")
-        and str_tailmatch(expr, ")", 0, size, 1)  # expr.endswith(")")
-    ):
-        expr = str_substr(expr, 1, size - 1)
-        expr = expr.strip()
-    return expr
+    return None if str_len(expr) == 0 else expr
 
 # Partitioning -----------------------------------------------------------------------------
 ctypedef enum PARTITIONING_METHOD:
