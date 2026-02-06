@@ -1,6 +1,6 @@
 # Package requirements
 numpy>=1.25.2
-sqlcycli>=2.0.4
+sqlcycli>=2.0.5
 typing-extensions>=4.9.0
 # Development requirements
 Cython==3.2.1
