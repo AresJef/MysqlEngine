@@ -19,8 +19,8 @@ from cython.cimports.mysqlengine.element import Element, Elements  # type: ignor
 from cython.cimports.mysqlengine import utils  # type: ignore
 
 # Python imports
+import logging
 from asyncio import gather as _aio_gather
-from sqlcycli import errors as sqlerrors
 from sqlcycli.sqlfunc import SQLFunction
 from sqlcycli.transcode import escape as _escape
 from sqlcycli.aio.pool import Pool, PoolConnection, PoolSyncConnection
@@ -36,6 +36,9 @@ __all__ = [
     "DeleteDML",
     "WithDML",
 ]
+
+
+logger = logging.getLogger(__name__)
 
 
 # Clause -----------------------------------------------------------------------------------------------------
@@ -2601,6 +2604,7 @@ class DML:
         """
         # Compose statement
         stmt: str = self.statement()
+        logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
         if self._sync_conn is not None:
@@ -2699,6 +2703,7 @@ class DML:
         """
         # Compose statement
         stmt: str = self.statement()
+        logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
         if self._async_conn is not None:
