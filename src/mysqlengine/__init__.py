@@ -1,3 +1,7 @@
+import logging
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 from sqlcycli import errors as sqlerrors, sqlfunc
 from sqlcycli.charset import Charset
 from sqlcycli.connection import (
@@ -17,7 +21,6 @@ from sqlcycli.aio.connection import (
     SSDfCursor as AioSSDfCursor,
 )
 from sqlcycli.aio.pool import Pool, PoolConnection, PoolSyncConnection
-from sqlcycli.retry import retry_on_errno
 from mysqlengine import errors
 from mysqlengine.element import Element, Elements, Logs
 from mysqlengine.database import Database, DatabaseMetadata
@@ -136,6 +139,4 @@ __all__ = [
     "UpdateDML",
     "DeleteDML",
     "WithDML",
-    # Decorators
-    "retry_on_errno",
 ]
