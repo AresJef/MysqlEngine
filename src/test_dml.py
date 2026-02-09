@@ -1141,6 +1141,7 @@ class TestSelectClause(TestCase):
         self.assertClauseEqual(dml._gen_order_by_clause(("col1",)), "\tORDER BY col1", 1)
         self.assertClauseEqual(dml._gen_order_by_clause(("col1",)), "\t\tORDER BY col1", 2)
         self.assertClauseEqual(dml._gen_order_by_clause(("col1",)), "ORDER BY col1", 0)
+        # fmt: on
 
         self.log_ended("ORDER BY")
 
@@ -5533,6 +5534,45 @@ if __name__ == "__main__":
     PORT = 3306
     USER = "root"
     PSWD = "Password_123456"
+
+    import logging.config
+
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "standard": {
+                    "format": "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d %(funcName)s() | %(message)s"
+                }
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "DEBUG",
+                    "formatter": "standard",
+                },
+                "file": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "filename": "app.log",
+                    "maxBytes": 10_000_000,
+                    "backupCount": 5,
+                    "encoding": "utf-8",
+                    "level": "DEBUG",
+                    "formatter": "standard",
+                },
+            },
+            "root": {
+                "level": "INFO",
+                "handlers": ["console", "file"],
+            },
+            "loggers": {
+                "lingxingapi": {"level": "WARNING", "propagate": True},
+                "sqlcycli": {"level": "WARNING", "propagate": True},
+                "mysqlengine": {"level": "DEBUG", "propagate": True},
+            },
+        }
+    )
 
     for case in (
         TestSelectClause,
