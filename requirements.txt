@@ -1,4 +1,4 @@
 # Package requirements
 numpy>=1.25.2
-sqlcycli>=2.1.0
+sqlcycli>=2.1.1
 typing-extensions>=4.9.0
