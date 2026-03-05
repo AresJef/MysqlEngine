@@ -1293,6 +1293,7 @@ class DML:
     _clause_id: cython.int
     _tb_id: cython.int
     _multi_table: cython.bint
+    _insert_mode: cython.int
     _hashcode: cython.Py_ssize_t
 
     def __init__(self, dml: str, db_name: str, pool: Pool):
@@ -1328,6 +1329,7 @@ class DML:
         self._clause_id = utils.DML_CLAUSE.NONE
         self._tb_id = 0
         self._multi_table = False
+        self._insert_mode = utils.INSERT_MODE.INCOMPLETE
         self._hashcode = -1
 
     # Property -----------------------------------------------------------------------------
@@ -2653,7 +2655,6 @@ class DML:
         fetch_all: cython.bint = True,
         many: cython.bint = False,
         conn: object | None = None,
-        batch: cython.bint = False,
     ) -> object:
         """(internal) [async] Execute the DML statement.
 
@@ -2695,9 +2696,6 @@ class DML:
             If 'conn=None', the statement will be executed by a (random) connection
             from the pool, and commit automatically after the statement execution.
 
-        :param batch `<'bool'>`: Whether to execute the INSERT/REPLACE statement in batch mode. Defaults to `False`.
-            Should only be `True` for INSERT/REPLACE ... VALUES ... statements.
-
         :returns `<'tuple[tuple]/tuple[dict]/DataFrame/int'>`: The result set of the statement.
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
         """
@@ -2732,8 +2730,9 @@ class DML:
             )
 
         # Connection from pool
-        # . no arguments / single-row / batch-insert
-        if args is None or not many or batch:
+        # . batch-insert / no arguments / single-row
+        batch_insert: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
+        if batch_insert or args is None or not many:
             async with self._pool.acquire() as conn:
                 if self._multi_table:
                     await conn.select_database(self._db_name)
@@ -4542,9 +4541,7 @@ class SelectDML(DML):
             UPDATE ...;
             COMMIT;
         """
-        return await self._aioExecute(
-            args, cursor, fetch, fetch_all, False, conn, False
-        )
+        return await self._aioExecute(args, cursor, fetch, fetch_all, False, conn)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -4588,8 +4585,6 @@ class InsertDML(DML):
         self._values_clause = None
         self._set_clause = None
         self._on_dup_key_update_clause = None
-        # internal
-        self._insert_mode = utils.INSERT_MODE.INCOMPLETE
 
     # Clause -------------------------------------------------------------------------------
     # . insert
@@ -5583,6 +5578,7 @@ class InsertDML(DML):
         >>> "INSERT INTO db.tb (id, name) VALUES (%s,%s)"
         """
         pad: str = self._validate_indent(indent)
+        self._insert_mode = utils.INSERT_MODE.INCOMPLETE
         # . insert
         if self._insert_clause is None:
             self._raise_clause_error("INSERT clause is not set.")
@@ -5751,8 +5747,7 @@ class InsertDML(DML):
             INSERT INTO db.tb VALUES (...);
             COMMIT;
         """
-        batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
-        return await self._aioExecute(args, None, False, False, many, conn, batch)
+        return await self._aioExecute(args, None, False, False, many, conn)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -5805,8 +5800,6 @@ class ReplaceDML(DML):
         self._columns_clause = None
         self._values_clause = None
         self._set_clause = None
-        # internal
-        self._insert_mode = utils.INSERT_MODE.INCOMPLETE
 
     # Clause -------------------------------------------------------------------------------
     # . replace
@@ -6671,6 +6664,7 @@ class ReplaceDML(DML):
         >>> "REPLACE INTO db.tb (first_name, last_name) VALUES (%s,%s)"
         """
         pad: str = self._validate_indent(indent)
+        self._insert_mode = utils.INSERT_MODE.INCOMPLETE
         # . replace
         if self._replace_clause is None:
             self._raise_clause_error("REPLACE clause is not set.")
@@ -6835,8 +6829,7 @@ class ReplaceDML(DML):
             REPLACE INTO db.tb VALUES (...);
             COMMIT;
         """
-        batch: cython.bint = self._insert_mode == utils.INSERT_MODE.VALUES_MODE
-        return await self._aioExecute(args, None, False, False, many, conn, batch)
+        return await self._aioExecute(args, None, False, False, many, conn)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -7600,7 +7593,7 @@ class UpdateDML(DML):
             WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, False, many, conn, False)
+        return await self._aioExecute(args, None, False, False, many, conn)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -8314,7 +8307,7 @@ class DeleteDML(DML):
             DELETE FROM db.tb AS t0 WHERE id=1;
             COMMIT;
         """
-        return await self._aioExecute(args, None, False, False, many, conn, False)
+        return await self._aioExecute(args, None, False, False, many, conn)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc

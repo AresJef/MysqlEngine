@@ -230,6 +230,7 @@ cdef class DML:
         int _clause_id
         int _tb_id
         bint _multi_table
+        bint _insert_mode
         Py_ssize_t _hashcode
     # Connection
     cpdef bint _set_connection(self, PoolSyncConnection sync_conn=?, PoolConnection async_conn=?) except -1
@@ -322,8 +323,6 @@ cdef class InsertDML(DML):
         INSERT_VALUES _values_clause
         SET _set_clause
         ON_DUPLICATE _on_dup_key_update_clause
-        # internal
-        int _insert_mode
     # Clause
     cpdef InsertDML Insert(self, object table, object partition=?, bint ignore=?, object priority=?)
     # Statement
@@ -341,8 +340,6 @@ cdef class ReplaceDML(DML):
         INSERT_COLUMNS _columns_clause
         INSERT_VALUES _values_clause
         SET _set_clause
-        # internal
-        int _insert_mode
     # Clause
     cpdef ReplaceDML Replace(self, object table, object partition=?, bint low_priority=?)
     # Statement
