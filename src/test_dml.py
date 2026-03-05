@@ -1740,7 +1740,11 @@ class TestSelectStatement(TestCase):
             dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nWHERE t0.id > %s"
         )
         self.assertEqual(dml.Execute(0), self.TEST_DATA)
+        self.assertTrue(dml.Explain(0))
+        self.assertTrue(dml.Explain(0, analyze=True))
         self.assertEqual(await dml.aioExecute(0), self.TEST_DATA)
+        self.assertTrue(await dml.aioExplain(0))
+        self.assertTrue(await dml.aioExplain(0, analyze=True))
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = (
             db.Select("*")
@@ -1935,7 +1939,11 @@ class TestSelectStatement(TestCase):
         )
         res = ((1, "a0", 1.0, datetime.datetime(2012, 1, 1, 0, 0)),)
         self.assertEqual(dml.Execute([1, 0, 1, "a0"]), res)
+        self.assertTrue(dml.Explain([1, 0, 1, "a0"]))
+        self.assertTrue(dml.Explain([1, 0, 1, "a0"], analyze=True))
         self.assertEqual(await dml.aioExecute([1, 0, 1, "a0"]), res)
+        self.assertTrue(await dml.aioExplain([1, 0, 1, "a0"]))
+        self.assertTrue(await dml.aioExplain([1, 0, 1, "a0"], analyze=True))
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
             (
@@ -2756,7 +2764,11 @@ class TestSelectStatement(TestCase):
             "USING (id)",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
+        self.assertTrue(dml.Explain())
+        self.assertTrue(dml.Explain(analyze=True))
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
+        self.assertTrue(await dml.aioExplain())
+        self.assertTrue(await dml.aioExplain(analyze=True))
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = (
@@ -3227,9 +3239,13 @@ class TestInsertStatement(TestCase):
         self.assertIsNotNone(m, "RE match failed")
         self.assertEqual(m.group(3), "")
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            dml.Explain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            await dml.aioExplain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
 
@@ -3435,9 +3451,13 @@ class TestInsertStatement(TestCase):
             "INSERT INTO db.tb1\nSET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            dml.Explain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            await dml.aioExplain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
 
@@ -3546,9 +3566,11 @@ class TestInsertStatement(TestCase):
             "INSERT INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0",
         )
         self.assertEqual(dml.Execute(), 6)
+        self.assertTrue(dml.Explain())
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(), 6)
+        self.assertTrue(await dml.aioExplain())
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         db.tb1.Truncate()
 
@@ -3559,9 +3581,11 @@ class TestInsertStatement(TestCase):
             "INSERT INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(1), 1)
+        self.assertTrue(dml.Explain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA1[0],))
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(1), 1)
+        self.assertTrue(await dml.aioExplain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA1[0],))
         db.tb1.Truncate()
         self.assertEqual(dml.Execute(([1], [2]), True), 2)
@@ -3857,11 +3881,15 @@ class TestReplaceStatement(TestCase):
         self.assertIsNotNone(m, "RE match failed")
         self.assertEqual(m.group(3), "")
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            dml.Explain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         self.assertEqual(dml.Execute(self.TEST_DATA2, True), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            await dml.aioExplain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         self.assertEqual(await dml.aioExecute(self.TEST_DATA2, True), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
@@ -3937,12 +3965,16 @@ class TestReplaceStatement(TestCase):
             "REPLACE INTO db.tb1\nSET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
+        with self.assertRaises(errors.DMLClauseError):
+            dml.Explain(self.TEST_DATA1[0])
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         self.assertEqual(dml.Execute(self.TEST_DATA2, True), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(self.TEST_DATA1, True), 6)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
+        with self.assertRaises(errors.DMLClauseError):
+            await dml.aioExplain(self.TEST_DATA1[0])
         self.assertEqual(await dml.aioExecute(self.TEST_DATA2, True), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
         db.tb1.Truncate()
@@ -3969,11 +4001,13 @@ class TestReplaceStatement(TestCase):
             "REPLACE INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0",
         )
         self.assertEqual(dml.Execute(), 6)
+        self.assertTrue(dml.Explain())
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         self.assertEqual(dml2.Execute(), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(), 6)
+        self.assertTrue(await dml.aioExplain())
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA1)
         self.assertEqual(await dml2.aioExecute(), 12)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
@@ -3987,11 +4021,13 @@ class TestReplaceStatement(TestCase):
             "REPLACE INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(1), 1)
+        self.assertTrue(dml.Explain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA1[0],))
         self.assertEqual(dml2.Execute(1), 2)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA2[0],))
         db.tb1.Truncate()
         self.assertEqual(await dml.aioExecute(1), 1)
+        self.assertTrue(await dml.aioExplain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA1[0],))
         self.assertEqual(await dml2.aioExecute(1), 2)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), (self.TEST_DATA2[0],))
@@ -4285,10 +4321,12 @@ class TestUpdateStatement(TestCase):
         dml = db.Update(db.tb1).Set("name=%s")
         self.assertEqual(dml.Statement(), "UPDATE db.tb1 AS t0\nSET name=%s")
         self.assertEqual(dml.Execute("n1"), 6)
+        self.assertTrue(dml.Explain("n1"))
         self.assertEqual(
             db.Select("name", distinct=True).From(db.tb1).Execute(), (("n1",),)
         )
         self.assertEqual(await dml.aioExecute("n2"), 6)
+        self.assertTrue(await dml.aioExplain("n2"))
         self.assertEqual(
             db.Select("name", distinct=True).From(db.tb1).Execute(), (("n2",),)
         )
@@ -4442,8 +4480,10 @@ class TestUpdateStatement(TestCase):
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
         )
         self.assertEqual(dml.Execute(), 6)
+        self.assertTrue(dml.Explain())
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA2)
         self.assertEqual(await dml.aioExecute(), 0)
+        self.assertTrue(await dml.aioExplain())
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = (
@@ -4730,8 +4770,10 @@ class TestDeleteStatement(TestCase):
         dml = db.Delete(db.tb1).Where("id=%s")
         self.assertEqual(dml.Statement(), "DELETE FROM db.tb1 AS t0\nWHERE id=%s")
         self.assertEqual(dml.Execute(1), 1)
+        self.assertTrue(dml.Explain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[1:])
         self.assertEqual(await dml.aioExecute(2), 1)
+        self.assertTrue(await dml.aioExplain(2))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[2:])
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4797,8 +4839,10 @@ class TestDeleteStatement(TestCase):
             "WHERE t1.id=%s",
         )
         self.assertEqual(dml.Execute(1), 1)
+        self.assertTrue(dml.Explain(1))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[1:])
         self.assertEqual(await dml.aioExecute(2), 1)
+        self.assertTrue(await dml.aioExplain(2))
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[2:])
         self.assertEqual(dml.Execute([3, 4], many=True), 2)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[4:])
@@ -5324,44 +5368,44 @@ if __name__ == "__main__":
     USER = "root"
     PSWD = "Password_123456"
 
-    import logging.config
+    # import logging.config
 
-    logging.config.dictConfig(
-        {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "formatters": {
-                "standard": {
-                    "format": "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d %(funcName)s() | %(message)s"
-                }
-            },
-            "handlers": {
-                "console": {
-                    "class": "logging.StreamHandler",
-                    "level": "DEBUG",
-                    "formatter": "standard",
-                },
-                "file": {
-                    "class": "logging.handlers.RotatingFileHandler",
-                    "filename": "app.log",
-                    "maxBytes": 10_000_000,
-                    "backupCount": 5,
-                    "encoding": "utf-8",
-                    "level": "DEBUG",
-                    "formatter": "standard",
-                },
-            },
-            "root": {
-                "level": "INFO",
-                "handlers": ["console", "file"],
-            },
-            "loggers": {
-                "lingxingapi": {"level": "WARNING", "propagate": True},
-                "sqlcycli": {"level": "WARNING", "propagate": True},
-                "mysqlengine": {"level": "DEBUG", "propagate": True},
-            },
-        }
-    )
+    # logging.config.dictConfig(
+    #     {
+    #         "version": 1,
+    #         "disable_existing_loggers": False,
+    #         "formatters": {
+    #             "standard": {
+    #                 "format": "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d %(funcName)s() | %(message)s"
+    #             }
+    #         },
+    #         "handlers": {
+    #             "console": {
+    #                 "class": "logging.StreamHandler",
+    #                 "level": "DEBUG",
+    #                 "formatter": "standard",
+    #             },
+    #             "file": {
+    #                 "class": "logging.handlers.RotatingFileHandler",
+    #                 "filename": "app.log",
+    #                 "maxBytes": 10_000_000,
+    #                 "backupCount": 5,
+    #                 "encoding": "utf-8",
+    #                 "level": "DEBUG",
+    #                 "formatter": "standard",
+    #             },
+    #         },
+    #         "root": {
+    #             "level": "INFO",
+    #             "handlers": ["console", "file"],
+    #         },
+    #         "loggers": {
+    #             "lingxingapi": {"level": "WARNING", "propagate": True},
+    #             "sqlcycli": {"level": "WARNING", "propagate": True},
+    #             "mysqlengine": {"level": "DEBUG", "propagate": True},
+    #         },
+    #     }
+    # )
 
     for case in (
         TestSelectClause,
