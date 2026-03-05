@@ -2448,7 +2448,24 @@ class DML:
 
     # Statement ----------------------------------------------------------------------------
     @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    def Statement(self, args: object = None, many: cython.bint = False) -> str:
+        """Compose the DML (partial) statement for analysis `<'str'>`.
+
+        :param args `<'Any'>`: The arguments to bind into the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' is multi-row data. Defaults to `False`.
+
+        ## Notice
+        - This method compose the DML (partial) statement for analysis `ONLY`, 
+          do `NOT` use it as the actual sql for query execution.
+        - For multi-row 'args', only binds the FIRST row into the statement.
+        """
+        stmt: str = self._gen_statement()
+        with self._pool.acquire() as conn:
+            with conn.cursor() as cur:
+                return cur.mogrify(stmt, args, many)
+
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the DML statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.
@@ -2605,7 +2622,7 @@ class DML:
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
         """
         # Compose statement
-        stmt: str = self.statement()
+        stmt: str = self._gen_statement()
         logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
@@ -2700,7 +2717,7 @@ class DML:
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
         """
         # Compose statement
-        stmt: str = self.statement()
+        stmt: str = self._gen_statement()
         logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
@@ -4353,8 +4370,8 @@ class SelectDML(DML):
         return self
 
     # Statement ----------------------------------------------------------------------------
-    @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the SELECT statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.
@@ -5567,8 +5584,8 @@ class InsertDML(DML):
         return self
 
     # Statement ----------------------------------------------------------------------------
-    @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the INSERT statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.
@@ -6653,8 +6670,8 @@ class ReplaceDML(DML):
         return self
 
     # Statement ----------------------------------------------------------------------------
-    @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the REPLACE statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.
@@ -7369,8 +7386,8 @@ class UpdateDML(DML):
         return self
 
     # Statement ----------------------------------------------------------------------------
-    @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the UPDATE statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.
@@ -8100,8 +8117,8 @@ class DeleteDML(DML):
         return self
 
     # Statement ----------------------------------------------------------------------------
-    @cython.ccall
-    def statement(self, indent: cython.int = 0) -> str:
+    @cython.cfunc
+    def _gen_statement(self, indent: cython.int = 0) -> str:
         """Compose the UPDATE statement `<'str'>`.
 
         :param indent `<'int'>`: The indentation level of the statement. Defaults to 0.

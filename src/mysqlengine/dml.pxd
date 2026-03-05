@@ -275,7 +275,8 @@ cdef class DML:
     # WITH Clause
     cpdef WITH _gen_with_clause(self, object name, object subquery, tuple columns, bint recursive=?)
     # Statement
-    cpdef str statement(self, int indent=?)
+    cpdef str Statement(self, object args=?, bint many=?)
+    cdef str _gen_statement(self, int indent=?)
     cdef inline str _gen_select_statement(self, str pad=?)
     cdef inline str _gen_select_subquery(self, str pad=?)
     # Execute
@@ -307,8 +308,6 @@ cdef class SelectDML(DML):
     # Clause
     cpdef SelectDML _Select(self, tuple expressions, bint distinct=?, bint high_priority=?, bint straight_join=?, bint sql_buffer_result=?)
     cpdef SelectDML From(self, object table, object partition=?, object alias=?)
-    # Statement
-    cpdef str statement(self, int indent=?)
     # Execute
     cpdef object Execute(self, object args=?, object cursor=?, bint fetch=?, bint fetch_all=?, object conn=?)
     # Validate
@@ -325,8 +324,6 @@ cdef class InsertDML(DML):
         ON_DUPLICATE _on_dup_key_update_clause
     # Clause
     cpdef InsertDML Insert(self, object table, object partition=?, bint ignore=?, object priority=?)
-    # Statement
-    cpdef str statement(self, int indent=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
     # Validate
@@ -342,8 +339,6 @@ cdef class ReplaceDML(DML):
         SET _set_clause
     # Clause
     cpdef ReplaceDML Replace(self, object table, object partition=?, bint low_priority=?)
-    # Statement
-    cpdef str statement(self, int indent=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
     # Validate
@@ -357,8 +352,6 @@ cdef class UpdateDML(DML):
         SET _set_clause
     # Clause
     cpdef UpdateDML Update(self, object table, object partition=?, bint ignore=?, bint low_priority=?, object alias=?)
-    # Statement
-    cpdef str statement(self, int indent=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
     # Validate
@@ -371,8 +364,6 @@ cdef class DeleteDML(DML):
         DELETE _delete_clause
     # Clause
     cpdef DeleteDML Delete(self, object table, object partition=?, bint ignore=?, bint low_priority=?, bint quick=?, object alias=?, object multi_tables=?)
-    # Statement
-    cpdef str statement(self, int indent=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
     # Validate
