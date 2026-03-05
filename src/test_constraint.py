@@ -1293,7 +1293,7 @@ class TestConstraintSyncSQL(TestCase):
         self.assertEqual(meta.tb_name, db.tb.tb_name)
         self.assertEqual(meta.constraint_name, cnst.symbol)
         self.assertTrue(meta.enforced)
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
 
         # Alter
         # . default state
@@ -1302,15 +1302,15 @@ class TestConstraintSyncSQL(TestCase):
         # . expression: only
         cnst.Alter(expression="price > 1")
         meta = cnst.ShowMetadata()
-        self.assertEqual(cnst.expression, "`price` > 1")
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, orig_enforced)
         self.assertEqual(meta.enforced, orig_enforced)
         # . enforced: only
         cnst.Alter(enforced=False)
         meta = cnst.ShowMetadata()
-        self.assertEqual(cnst.expression, "`price` > 1")
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, False)
         self.assertEqual(meta.enforced, False)
         self.assertTrue(cnst.SetEnforced(True))
@@ -1340,13 +1340,13 @@ class TestConstraintSyncSQL(TestCase):
         self.assertEqual(cnst.expression, "price > 1")
         self.assertEqual(cnst.enforced, True)
         meta = cnst.ShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
         cnst.Alter(expression="price > 2", enforced=False)
-        self.assertEqual(cnst.expression, "`price` > 2")
+        self.assertEqual(cnst.expression, "(`price` > 2)")
         self.assertEqual(cnst.enforced, False)
         meta = cnst.ShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 2")
+        self.assertEqual(meta.expression, "(`price` > 2)")
         self.assertEqual(meta.enforced, False)
         self.assertTrue(cnst.Drop())
 
@@ -1369,10 +1369,10 @@ class TestConstraintSyncSQL(TestCase):
         self.assertEqual(cnst.enforced, False)
         # . after sync
         cnst.SyncFromRemote()
-        self.assertEqual(cnst.expression, "`price` > 0")
+        self.assertEqual(cnst.expression, "(`price` > 0)")
         self.assertEqual(cnst.enforced, True)
         meta = cnst.ShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
 
         # Sync to remote
@@ -1392,14 +1392,14 @@ class TestConstraintSyncSQL(TestCase):
         cnst = db2.tb.ck1
         # . before sync
         meta = cnst.ShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
         # . after sync
         cnst.SyncToRemote()
-        self.assertEqual(cnst.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, False)
         meta = cnst.ShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(meta.enforced, False)
         self.assertTrue(cnst.Drop())
 
@@ -2221,7 +2221,7 @@ class TestConstraintAyncSQL(TestCase):
         self.assertEqual(meta.tb_name, db.tb.tb_name)
         self.assertEqual(meta.constraint_name, cnst.symbol)
         self.assertTrue(meta.enforced)
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
 
         # Alter
         # . default state
@@ -2230,15 +2230,15 @@ class TestConstraintAyncSQL(TestCase):
         # . expression: only
         await cnst.aioAlter(expression="price > 1")
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(cnst.expression, "`price` > 1")
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, orig_enforced)
         self.assertEqual(meta.enforced, orig_enforced)
         # . enforced: only
         await cnst.aioAlter(enforced=False)
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(cnst.expression, "`price` > 1")
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, False)
         self.assertEqual(meta.enforced, False)
         self.assertTrue(await cnst.aioSetEnforced(True))
@@ -2268,13 +2268,13 @@ class TestConstraintAyncSQL(TestCase):
         self.assertEqual(cnst.expression, "price > 1")
         self.assertEqual(cnst.enforced, True)
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
         await cnst.aioAlter(expression="price > 2", enforced=False)
-        self.assertEqual(cnst.expression, "`price` > 2")
+        self.assertEqual(cnst.expression, "(`price` > 2)")
         self.assertEqual(cnst.enforced, False)
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 2")
+        self.assertEqual(meta.expression, "(`price` > 2)")
         self.assertEqual(meta.enforced, False)
         self.assertTrue(await cnst.aioDrop())
 
@@ -2297,10 +2297,10 @@ class TestConstraintAyncSQL(TestCase):
         self.assertEqual(cnst.enforced, False)
         # . after sync
         await cnst.aioSyncFromRemote()
-        self.assertEqual(cnst.expression, "`price` > 0")
+        self.assertEqual(cnst.expression, "(`price` > 0)")
         self.assertEqual(cnst.enforced, True)
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
 
         # Sync to remote
@@ -2320,14 +2320,14 @@ class TestConstraintAyncSQL(TestCase):
         cnst = db2.tb.ck1
         # . before sync
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 0")
+        self.assertEqual(meta.expression, "(`price` > 0)")
         self.assertEqual(meta.enforced, True)
         # . after sync
         await cnst.aioSyncToRemote()
-        self.assertEqual(cnst.expression, "`price` > 1")
+        self.assertEqual(cnst.expression, "(`price` > 1)")
         self.assertEqual(cnst.enforced, False)
         meta = await cnst.aioShowMetadata()
-        self.assertEqual(meta.expression, "`price` > 1")
+        self.assertEqual(meta.expression, "(`price` > 1)")
         self.assertEqual(meta.enforced, False)
         self.assertTrue(await cnst.aioDrop())
 
