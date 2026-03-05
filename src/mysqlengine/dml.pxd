@@ -281,6 +281,8 @@ cdef class DML:
     cdef inline str _gen_select_subquery(self, str pad=?)
     # Execute
     cpdef object _Execute(self, object args=?, object cursor=?, bint fetch=?, bint fetch_all=?, bint many=?, object conn=?)
+    # Explain
+    cpdef tuple _Explain(self, object args=?, bint many=?, bint analyze=?)
     # Validate
     cdef inline str _validate_element_name(self, str name, str msg)
     cdef inline str _validate_element(self, object element, str msg)
@@ -310,6 +312,8 @@ cdef class SelectDML(DML):
     cpdef SelectDML From(self, object table, object partition=?, object alias=?)
     # Execute
     cpdef object Execute(self, object args=?, object cursor=?, bint fetch=?, bint fetch_all=?, object conn=?)
+    # Explain
+    cpdef tuple Explain(self, object args=?, bint analyze=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 
@@ -326,6 +330,8 @@ cdef class InsertDML(DML):
     cpdef InsertDML Insert(self, object table, object partition=?, bint ignore=?, object priority=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
+    # Explain
+    cpdef tuple Explain(self, object args=?, bint many=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 
@@ -341,6 +347,8 @@ cdef class ReplaceDML(DML):
     cpdef ReplaceDML Replace(self, object table, object partition=?, bint low_priority=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
+    # Explain
+    cpdef tuple Explain(self, object args=?, bint many=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 
@@ -354,6 +362,8 @@ cdef class UpdateDML(DML):
     cpdef UpdateDML Update(self, object table, object partition=?, bint ignore=?, bint low_priority=?, object alias=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
+    # Explain
+    cpdef tuple Explain(self, object args=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 
@@ -366,6 +376,8 @@ cdef class DeleteDML(DML):
     cpdef DeleteDML Delete(self, object table, object partition=?, bint ignore=?, bint low_priority=?, bint quick=?, object alias=?, object multi_tables=?)
     # Execute
     cpdef object Execute(self, object args=?, bint many=?, object conn=?)
+    # Explain
+    cpdef tuple Explain(self, object args=?)
     # Validate
     cdef inline bint _validate_join_clause_order(self) except -1
 

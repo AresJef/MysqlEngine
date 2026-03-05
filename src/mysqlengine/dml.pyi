@@ -179,6 +179,17 @@ class SelectDML(DML):
         fetch_all: bool = True,
         conn: PoolConnection | None = None,
     ) -> tuple[tuple] | tuple[dict] | DataFrame | int: ...
+    # Explain
+    def Explain(
+        self,
+        args: list | tuple | DataFrame | Any | None = None,
+        analyze: bool = False,
+    ) -> tuple[dict]: ...
+    async def aioExplain(
+        self,
+        args: list | tuple | DataFrame | Any | None = None,
+        analyze: bool = False,
+    ) -> tuple[dict]: ...
 
 # Insert - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class InsertDML(DML):
@@ -319,6 +330,17 @@ class InsertDML(DML):
         many: bool = False,
         conn: PoolConnection | None = None,
     ) -> int: ...
+    # Explain
+    def Explain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+        many: bool = False,
+    ) -> tuple[dict]: ...
+    async def aioExplain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+        many: bool = False,
+    ) -> tuple[dict]: ...
 
 # Replace - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ReplaceDML(DML):
@@ -456,6 +478,17 @@ class ReplaceDML(DML):
         many: bool = False,
         conn: PoolConnection | None = None,
     ) -> int: ...
+    # Explain
+    def Explain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+        many: bool = False,
+    ) -> tuple[dict]: ...
+    async def aioExplain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+        many: bool = False,
+    ) -> tuple[dict]: ...
 
 # Update - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class UpdateDML(DML):
@@ -555,6 +588,15 @@ class UpdateDML(DML):
         many: bool = False,
         conn: PoolConnection | None = None,
     ) -> int: ...
+    # Explain
+    def Explain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+    ) -> tuple[dict]: ...
+    async def aioExplain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+    ) -> tuple[dict]: ...
 
 # Delete - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class DeleteDML(DML):
@@ -655,6 +697,15 @@ class DeleteDML(DML):
         many: bool = False,
         conn: PoolConnection | None = None,
     ) -> int: ...
+    # Explain
+    def Explain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+    ) -> tuple[dict]: ...
+    async def aioExplain(
+        self,
+        args: list | tuple | DataFrame | Any = None,
+    ) -> tuple[dict]: ...
 
 # With - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class WithDML(DML):

@@ -2455,11 +2455,11 @@ class DML:
         :param many `<'bool'>`: Whether the 'args' is multi-row data. Defaults to `False`.
 
         ## Notice
-        - This method compose the DML (partial) statement for analysis `ONLY`, 
+        - This method compose the DML (partial) statement for analysis `ONLY`,
           do `NOT` use it as the actual sql for query execution.
         - For multi-row 'args', only binds the FIRST row into the statement.
         """
-        stmt: str = self._gen_statement()
+        stmt: str = self._gen_statement(0)
         with self._pool.acquire() as conn:
             with conn.cursor() as cur:
                 return cur.mogrify(stmt, args, many)
@@ -2622,7 +2622,7 @@ class DML:
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
         """
         # Compose statement
-        stmt: str = self._gen_statement()
+        stmt: str = self._gen_statement(0)
         logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
@@ -2717,7 +2717,7 @@ class DML:
             Returns the number of affected rows `<'int'>` only when 'fetch=False'.
         """
         # Compose statement
-        stmt: str = self._gen_statement()
+        stmt: str = self._gen_statement(0)
         logger.debug("DML Statement:\n%s", stmt)
 
         # Connection specified
@@ -2785,6 +2785,82 @@ class DML:
                 await conn.select_database(self._db_name)
             async with conn.transaction() as cur:
                 return await cur.execute(stmt)
+
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def _Explain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+        analyze: cython.bint = False,
+    ) -> tuple[dict]:
+        """(internal) [sync] Execute MySQL `EXPLAIN` for the current DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :param analyze `<'bool'>`: Whether to use `EXPLAIN ANALYZE` (execution + runtime profiling)
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        # Compose statement
+        stmt: str = self._gen_statement(0)
+        logger.debug("DML Statement:\n%s", stmt)
+        if self._insert_mode not in (
+            utils.INSERT_MODE.INCOMPLETE,
+            utils.INSERT_MODE.SELECT_MODE,
+        ):
+            self._raise_clause_error(
+                "For Insert DML, EXPLAIN is only supported for 'INSERT INTO t (...) SELECT ...'."
+            )
+        if analyze:
+            stmt = "EXPLAIN ANALYZE\n" + stmt
+        else:
+            stmt = "EXPLAIN\n" + stmt
+
+        # Execute explain query
+        with self._pool.acquire() as conn:
+            if self._multi_table:
+                conn.select_database(self._db_name)
+            with conn.transaction(cursor=dict) as cur:
+                cur.execute(stmt, args, many)
+                return cur.fetchall()
+
+    async def _aioExplain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+        analyze: cython.bint = False,
+    ) -> tuple[dict]:
+        """(internal) [async] Execute MySQL `EXPLAIN` for the current DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :param analyze `<'bool'>`: Whether to use `EXPLAIN ANALYZE` (execution + runtime profiling)
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        # Compose statement
+        stmt: str = self._gen_statement(0)
+        logger.debug("DML Statement:\n%s", stmt)
+        if self._insert_mode not in (
+            utils.INSERT_MODE.INCOMPLETE,
+            utils.INSERT_MODE.SELECT_MODE,
+        ):
+            self._raise_clause_error(
+                "For Insert DML, EXPLAIN is only supported for 'INSERT INTO t (...) SELECT ...'."
+            )
+        if analyze:
+            stmt = "EXPLAIN ANALYZE\n" + stmt
+        else:
+            stmt = "EXPLAIN\n" + stmt
+
+        # Execute explain query
+        async with self._pool.acquire() as conn:
+            if self._multi_table:
+                await conn.select_database(self._db_name)
+            async with conn.transaction(dict) as cur:
+                await cur.execute(stmt, args, many)
+                return await cur.fetchall()
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
@@ -4560,6 +4636,34 @@ class SelectDML(DML):
         """
         return await self._aioExecute(args, cursor, fetch, fetch_all, False, conn)
 
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def Explain(
+        self,
+        args: object = None,
+        analyze: cython.bint = False,
+    ) -> tuple[dict]:
+        """[sync] Execute MySQL `EXPLAIN` for the SELECT DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param analyze `<'bool'>`: Whether to use `EXPLAIN ANALYZE` (execution + runtime profiling)
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return self._Explain(args, False, analyze)
+
+    async def aioExplain(
+        self,
+        args: object = None,
+        analyze: cython.bint = False,
+    ) -> tuple[dict]:
+        """[async] Execute MySQL `EXPLAIN` for the SELECT DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param analyze `<'bool'>`: Whether to use `EXPLAIN ANALYZE` (execution + runtime profiling)
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return await self._aioExplain(args, False, analyze)
+
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
     @cython.inline(True)
@@ -5766,6 +5870,42 @@ class InsertDML(DML):
         """
         return await self._aioExecute(args, None, False, False, many, conn)
 
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def Explain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+    ) -> tuple[dict]:
+        """[sync] Execute MySQL `EXPLAIN` for the INSERT DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :return `<'tuple[dict]'>`: The explain result.
+
+        ## Notice
+        - For INSERT statements, MySQL only supports EXPLAIN for the `INSERT INTO ... SELECT ...`
+        """
+        return self._Explain(args, many, False)
+
+    async def aioExplain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+    ) -> tuple[dict]:
+        """[async] Execute MySQL `EXPLAIN` for the INSERT DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :return `<'tuple[dict]'>`: The explain result.
+
+        ## Notice
+        - For INSERT statements, MySQL only supports EXPLAIN for the `INSERT INTO ... SELECT ...`
+        """
+        return await self._aioExplain(args, many, False)
+
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
     @cython.inline(True)
@@ -6848,6 +6988,42 @@ class ReplaceDML(DML):
         """
         return await self._aioExecute(args, None, False, False, many, conn)
 
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def Explain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+    ) -> tuple[dict]:
+        """[sync] Execute MySQL `EXPLAIN` for the REPLACE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :return `<'tuple[dict]'>`: The explain result.
+
+        ## Notice
+        - For Replace statements, MySQL only supports EXPLAIN for the `REPLACE INTO ... SELECT ...`
+        """
+        return self._Explain(args, many, False)
+
+    async def aioExplain(
+        self,
+        args: object = None,
+        many: cython.bint = False,
+    ) -> tuple[dict]:
+        """[async] Execute MySQL `EXPLAIN` for the REPLACE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :param many `<'bool'>`: Whether the 'args' (data) is multi-rows. Determines how the data is escaped. Defaults to `False`.
+            For a single-row data, set 'many=False'. For a multi-row data, set 'many=True'.
+        :return `<'tuple[dict]'>`: The explain result.
+
+        ## Notice
+        - For Replace statements, MySQL only supports EXPLAIN for the `REPLACE INTO ... SELECT ...`
+        """
+        return await self._aioExplain(args, many, False)
+
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
     @cython.inline(True)
@@ -7612,6 +7788,24 @@ class UpdateDML(DML):
         """
         return await self._aioExecute(args, None, False, False, many, conn)
 
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def Explain(self, args: object = None) -> tuple[dict]:
+        """[sync] Execute MySQL `EXPLAIN` for the UPDATE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return self._Explain(args, False, False)
+
+    async def aioExplain(self, args: object = None) -> tuple[dict]:
+        """[async] Execute MySQL `EXPLAIN` for the UPDATE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return await self._aioExplain(args, False, False)
+
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
     @cython.inline(True)
@@ -8325,6 +8519,24 @@ class DeleteDML(DML):
             COMMIT;
         """
         return await self._aioExecute(args, None, False, False, many, conn)
+
+    # Explain ------------------------------------------------------------------------------
+    @cython.ccall
+    def Explain(self, args: object = None) -> tuple[dict]:
+        """[sync] Execute MySQL `EXPLAIN` for the DELETE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return self._Explain(args, False, False)
+
+    async def aioExplain(self, args: object = None) -> tuple[dict]:
+        """[async] Execute MySQL `EXPLAIN` for the DELETE DML statement.
+
+        :param args `<'list/tuple/DataFrame/Any'>`: The arguments for the placeholders in the statement. Defaults to `None`.
+        :return `<'tuple[dict]'>`: The explain result.
+        """
+        return await self._aioExplain(args, False, False)
 
     # Validate -----------------------------------------------------------------------------
     @cython.cfunc
