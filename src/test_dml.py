@@ -1290,12 +1290,12 @@ class TestSelectStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("1")
-        self.assertEqual(dml.statement(), "SELECT 1")
+        self.assertEqual(dml.Statement(), "SELECT 1")
         self.assertEqual(dml.Execute(), ((1,),))
         self.assertEqual(await dml.aioExecute(), ((1,),))
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("1", "2", "3")
-        self.assertEqual(dml.statement(), "SELECT\n\t1,\n\t2,\n\t3")
+        self.assertEqual(dml.Statement(), "SELECT\n\t1,\n\t2,\n\t3")
         self.assertEqual(dml.Execute(), ((1, 2, 3),))
         self.assertEqual(await dml.aioExecute(), ((1, 2, 3),))
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1307,7 +1307,7 @@ class TestSelectStatement(TestCase):
             sql_buffer_result=True,
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT DISTINCT HIGH_PRIORITY STRAIGHT_JOIN SQL_BUFFER_RESULT 1",
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1320,12 +1320,12 @@ class TestSelectStatement(TestCase):
             sql_buffer_result=True,
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT DISTINCT HIGH_PRIORITY STRAIGHT_JOIN SQL_BUFFER_RESULT\n\tc1,\n\tc2",
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("1").Select("1").statement()
+            db.Select("1").Select("1").Statement()
 
         # Finished
         db.Drop(True)
@@ -1338,13 +1338,13 @@ class TestSelectStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1)
-        self.assertEqual(dml.statement(), "SELECT *\nFROM db.tb1 AS t0")
+        self.assertEqual(dml.Statement(), "SELECT *\nFROM db.tb1 AS t0")
         self.assertEqual(dml.Execute(), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1, "from201201")
         self.assertEqual(
-            dml.statement(), "SELECT *\nFROM db.tb1 PARTITION (from201201) AS t0"
+            dml.Statement(), "SELECT *\nFROM db.tb1 PARTITION (from201201) AS t0"
         )
         res = (
             (1, "a0", 1.0, datetime.datetime(2012, 1, 1, 0, 0)),
@@ -1365,7 +1365,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1, ["from201201", "from201202"])
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 PARTITION (from201201, from201202) AS t0",
         )
         res = (
@@ -1378,19 +1378,19 @@ class TestSelectStatement(TestCase):
         self.assertEqual(await dml.aioExecute(), res)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("*").From(db.tb1).From("db.tb1").statement()
+            db.Select("*").From(db.tb1).From("db.tb1").Statement()
 
         # . with index hint
         dml = db.Select("*").From(db.tb1).UseIndex("idx1")
         self.assertEqual(
-            dml.statement(), "SELECT *\nFROM db.tb1 AS t0\n\tUSE INDEX (idx1)"
+            dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\n\tUSE INDEX (idx1)"
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).UseIndex(db.tb1.pk, "idx1")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n\tUSE INDEX (PRIMARY, idx1)",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1398,7 +1398,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).UseIndex("idx1", scope="JOIN")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n\tUSE INDEX FOR JOIN (idx1)",
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1410,7 +1410,7 @@ class TestSelectStatement(TestCase):
             .IgnoreIndex(db.tb1.pk, scope="ORDER BY")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n\t"
             "USE INDEX FOR JOIN (idx1)\n\t"
             "FORCE INDEX FOR GROUP BY (idx2)\n\t"
@@ -1418,11 +1418,11 @@ class TestSelectStatement(TestCase):
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("*").UseIndex("idx1").statement()
+            db.Select("*").UseIndex("idx1").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("*").ForceIndex("idx1").statement()
+            db.Select("*").ForceIndex("idx1").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("*").IgnoreIndex("idx1").statement()
+            db.Select("*").IgnoreIndex("idx1").Statement()
 
         # Finished
         db.Drop(True)
@@ -1436,7 +1436,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).Join(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)",
@@ -1446,7 +1446,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).LeftJoin(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "LEFT JOIN db.tb2 AS t1\n\tUSING (id)",
@@ -1456,7 +1456,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).RightJoin(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "RIGHT JOIN db.tb2 AS t1\n\tUSING (id)",
@@ -1466,7 +1466,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).StraightJoin(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "STRAIGHT_JOIN db.tb2 AS t1\n\tUSING (id)",
@@ -1476,7 +1476,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).CrossJoin(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "CROSS JOIN db.tb2 AS t1\n\tUSING (id)",
@@ -1486,7 +1486,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).NaturalJoin(db.tb2, "INNER")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n" "FROM db.tb1 AS t0\n" "NATURAL INNER JOIN db.tb2 AS t1",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1494,7 +1494,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).NaturalJoin(db.tb2, "LEFT")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n" "FROM db.tb1 AS t0\n" "NATURAL LEFT JOIN db.tb2 AS t1",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1502,7 +1502,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).NaturalJoin(db.tb2, "RIGHT")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n" "FROM db.tb1 AS t0\n" "NATURAL RIGHT JOIN db.tb2 AS t1",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1510,7 +1510,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).Join(db.tb2, "t0.id = t1.id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tON t0.id = t1.id",
         )
@@ -1523,7 +1523,7 @@ class TestSelectStatement(TestCase):
             .Join(db.tb2, "t0.id = t1.id", "t0.name = t1.name")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tON t0.id = t1.id\n\tAND t0.name = t1.name",
         )
@@ -1536,7 +1536,7 @@ class TestSelectStatement(TestCase):
             .Join(db.tb2, "t0.id = t1.id", "t0.name = t1.name", partition="from201201")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 PARTITION (from201201) AS t1\n\tON t0.id = t1.id\n\tAND t0.name = t1.name",
         )
@@ -1558,7 +1558,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 PARTITION (start, from201201) AS t1\n\tON t0.id = t1.id\n\tAND t0.name = t1.name",
         )
@@ -1571,7 +1571,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).Join(db.tb2, using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n" "INNER JOIN db.tb2 AS t1\n\tUSING (id)",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1579,7 +1579,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("t0.*").From(db.tb1).Join(db.tb2, using=["id", "name"])
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id, name)",
         )
@@ -1592,7 +1592,7 @@ class TestSelectStatement(TestCase):
             .Join(db.tb2, using=["id", "name"], partition=["from201201"])
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 PARTITION (from201201) AS t1\n\tUSING (id, name)",
         )
@@ -1609,7 +1609,7 @@ class TestSelectStatement(TestCase):
             .Join(db.tb2, using=["id", "name"], partition=["start", "from201201"])
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 PARTITION (start, from201201) AS t1\n\tUSING (id, name)",
         )
@@ -1622,7 +1622,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Join(db.tb2, using="id", alias="tb1")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n" "INNER JOIN db.tb2 AS tb1\n\tUSING (id)",
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1639,7 +1639,7 @@ class TestSelectStatement(TestCase):
             .NaturalJoin(db.tb2, "RIGHT")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tON t0.id = t1.id\n"
             "LEFT JOIN db.tb2 AS t2\n\tON t0.id = t2.id\n\tAND t0.name = t2.name\n"
@@ -1659,7 +1659,7 @@ class TestSelectStatement(TestCase):
             .UseIndex(db.tb2.idx1, scope="JOIN")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSE INDEX FOR JOIN (idx1)\n\tON t0.id = t1.id",
         )
@@ -1674,7 +1674,7 @@ class TestSelectStatement(TestCase):
             .IgnoreIndex(db.tb2.idx2, scope="JOIN")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSE INDEX FOR JOIN (idx1)\n\tIGNORE INDEX FOR JOIN (idx2)\n\tON t0.id = t1.id",
         )
@@ -1690,7 +1690,7 @@ class TestSelectStatement(TestCase):
             .UseIndex(db.tb2.idx2, scope="JOIN")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSE INDEX FOR JOIN (idx1)\n\tON t0.id = t1.id\n"
             "LEFT JOIN db.tb2 AS t2\n\tUSE INDEX FOR JOIN (idx2)\n\tUSING (id)",
@@ -1707,7 +1707,7 @@ class TestSelectStatement(TestCase):
             .IgnoreIndex(db.tb2.idx1, scope="JOIN")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSE INDEX FOR JOIN (idx1)\n\tIGNORE INDEX FOR JOIN (idx2)\n\tON t0.id = t1.id\n"
             "LEFT JOIN db.tb2 AS t2\n\tUSE INDEX FOR JOIN (idx2)\n\tIGNORE INDEX FOR JOIN (idx1)\n\tUSING (id)",
@@ -1716,7 +1716,7 @@ class TestSelectStatement(TestCase):
         with self.assertRaises(errors.DMLClauseError):
             db.Select("*").From(db.tb1).Where(
                 "id = 1", "name = 'test'", "price = 1.1"
-            ).Join(db.tb2, "t0.id = t1.id").statement()
+            ).Join(db.tb2, "t0.id = t1.id").Statement()
 
         # Finished
         db.Drop(True)
@@ -1730,14 +1730,14 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Where("t0.id > 0")
         self.assertEqual(
-            dml.statement(), "SELECT *\nFROM db.tb1 AS t0\nWHERE t0.id > 0"
+            dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nWHERE t0.id > 0"
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Where("t0.id > %s")
         self.assertEqual(
-            dml.statement(), "SELECT *\nFROM db.tb1 AS t0\nWHERE t0.id > %s"
+            dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nWHERE t0.id > %s"
         )
         self.assertEqual(dml.Execute(0), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(0), self.TEST_DATA)
@@ -1748,7 +1748,7 @@ class TestSelectStatement(TestCase):
             .Where("t0.id > 0", in_conds={"t0.name": ["a0", "a1"]})
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WHERE t0.id > 0\n\tAND t0.name IN ('a0','a1')",
         )
@@ -1770,7 +1770,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "WHERE t0.name IN ('a0','a1')\n\t"
@@ -1792,7 +1792,7 @@ class TestSelectStatement(TestCase):
                 .From(db.tb1)
                 .Where("t0.id > 0")
                 .Where("t0.id > 0")
-                .statement()
+                .Statement()
             )
 
         # Finished
@@ -1807,7 +1807,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Where("id > 0").GroupBy("id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\nWHERE id > 0\nGROUP BY id",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1815,7 +1815,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Where("id > 0").GroupBy("id", "name")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\nWHERE id > 0\nGROUP BY id, name",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -1828,7 +1828,7 @@ class TestSelectStatement(TestCase):
             .GroupBy("id", "name", with_rollup=True)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\nWHERE id > 0\nGROUP BY id, name WITH ROLLUP",
         )
         res = (
@@ -1856,7 +1856,7 @@ class TestSelectStatement(TestCase):
                 .Where("id > 10")
                 .GroupBy("id")
                 .GroupBy("id")
-                .statement()
+                .Statement()
             )
 
         # Finished
@@ -1871,7 +1871,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Where("id > 0").GroupBy("id").Having("id = 1")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WHERE id > 0\n"
             "GROUP BY id\n"
@@ -1889,7 +1889,7 @@ class TestSelectStatement(TestCase):
             .Having("id = 1", "name = 'a0'")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WHERE id > 0\n"
             "GROUP BY id\n"
@@ -1907,7 +1907,7 @@ class TestSelectStatement(TestCase):
             .Having("id = %s", "name = %s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WHERE id > %s\n"
             "GROUP BY id\n"
@@ -1926,7 +1926,7 @@ class TestSelectStatement(TestCase):
             .Having("t0.id = %s", "t0.name = %s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\nFROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tON t0.name = t1.name\n\tAND t0.id = %s\n"
             "WHERE t0.id > %s\n"
@@ -1945,7 +1945,7 @@ class TestSelectStatement(TestCase):
                 .GroupBy("t0.id")
                 .Having("id > 5")
                 .Having("id > 5")
-                .statement()
+                .Statement()
             )
 
         # Finished
@@ -1968,7 +1968,7 @@ class TestSelectStatement(TestCase):
             .Window("w1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\t"
             "name,\n\t"
             "FIRST_VALUE(name) OVER w1 AS name_1st,\n\t"
@@ -1997,7 +1997,7 @@ class TestSelectStatement(TestCase):
             .Window("w1", partition_by="name")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\t"
             "name,\n\t"
             "FIRST_VALUE(name) OVER w1 AS name_1st,\n\t"
@@ -2026,7 +2026,7 @@ class TestSelectStatement(TestCase):
             .Window("w1", order_by="name DESC")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\t"
             "name,\n\t"
             "FIRST_VALUE(name) OVER w1 AS name_1st,\n\t"
@@ -2055,7 +2055,7 @@ class TestSelectStatement(TestCase):
             .Window("w1", frame_clause="ROWS UNBOUNDED PRECEDING")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\t"
             "name,\n\t"
             "FIRST_VALUE(name) OVER w1 AS name_1st,\n\t"
@@ -2080,7 +2080,7 @@ class TestSelectStatement(TestCase):
             .Window("w1", "id", "id DESC", "ROWS UNBOUNDED PRECEDING")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WINDOW w1 AS (\n\t"
             "PARTITION BY id\n\t"
@@ -2094,7 +2094,7 @@ class TestSelectStatement(TestCase):
             .Window("w1", ["id", "name"], ["name", "id"], "ROWS UNBOUNDED PRECEDING")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\n"
             "WINDOW w1 AS (\n\t"
             "PARTITION BY id, name\n\t"
@@ -2115,7 +2115,7 @@ class TestSelectStatement(TestCase):
             .Window("w2", order_by="name DESC")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\t"
             "name,\n\t"
             "FIRST_VALUE(name) OVER w1 AS w1_name_1st,\n\t"
@@ -2148,7 +2148,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("id").From(db.tb1).OrderBy("id DESC")
         self.assertEqual(
-            dml.statement(), "SELECT id\nFROM db.tb1 AS t0\nORDER BY id DESC"
+            dml.Statement(), "SELECT id\nFROM db.tb1 AS t0\nORDER BY id DESC"
         )
         res = ((6,), (5,), (4,), (3,), (2,), (1,))
         self.assertEqual(dml.Execute(), res)
@@ -2156,7 +2156,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("id").From(db.tb1).OrderBy("id DESC", "name ASC")
         self.assertEqual(
-            dml.statement(), "SELECT id\nFROM db.tb1 AS t0\nORDER BY id DESC, name ASC"
+            dml.Statement(), "SELECT id\nFROM db.tb1 AS t0\nORDER BY id DESC, name ASC"
         )
         res = ((6,), (5,), (4,), (3,), (2,), (1,))
         self.assertEqual(dml.Execute(), res)
@@ -2169,7 +2169,7 @@ class TestSelectStatement(TestCase):
             .OrderBy("id DESC", "name ASC", with_rollup=True)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "GROUP BY id, name WITH ROLLUP\n"
@@ -2182,7 +2182,7 @@ class TestSelectStatement(TestCase):
                 .From(db.tb1)
                 .OrderBy("t0.id", "t0.name DESC")
                 .OrderBy("t0.id", "t0.name DESC")
-                .statement()
+                .Statement()
             )
 
         # Finished
@@ -2196,12 +2196,12 @@ class TestSelectStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Limit(10)
-        self.assertEqual(dml.statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10")
+        self.assertEqual(dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10")
         self.assertEqual(dml.Execute(), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Limit(2, 1)
-        self.assertEqual(dml.statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 1, 2")
+        self.assertEqual(dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 1, 2")
         res = (
             (2, "a1", 1.1, datetime.datetime(2012, 1, 1, 0, 0)),
             (3, "b0", 2.0, datetime.datetime(2012, 2, 1, 0, 0)),
@@ -2210,7 +2210,7 @@ class TestSelectStatement(TestCase):
         self.assertEqual(await dml.aioExecute(), res)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Select("*").From(db.tb1).Limit(10, 5).Limit(10, 5).statement()
+            db.Select("*").From(db.tb1).Limit(10, 5).Limit(10, 5).Statement()
 
         # Finished
         db.Drop(True)
@@ -2224,14 +2224,14 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Limit(10).ForUpdate()
         self.assertEqual(
-            dml.statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10\nFOR UPDATE"
+            dml.Statement(), "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10\nFOR UPDATE"
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
         self.assertEqual(await dml.aioExecute(), self.TEST_DATA)
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Limit(10).ForUpdate(option="NOWAIT")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10\nFOR UPDATE NOWAIT",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -2239,7 +2239,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Limit(10).ForUpdate(option="SKIP LOCKED")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM db.tb1 AS t0\nLIMIT 10\nFOR UPDATE SKIP LOCKED",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -2253,7 +2253,7 @@ class TestSelectStatement(TestCase):
             .ForUpdate("t0", "t1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
@@ -2272,7 +2272,7 @@ class TestSelectStatement(TestCase):
             .ForShare("t1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
@@ -2310,7 +2310,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("id").From(db.tb1).OrderBy("id DESC").Limit(1).Into("@var")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT id\nFROM db.tb1 AS t0\nORDER BY id DESC\nLIMIT 1\nINTO @var",
         )
         res = ((6,),)
@@ -2333,7 +2333,7 @@ class TestSelectStatement(TestCase):
             .Into("@var1", "@var2")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT\n\tid,\n\tname\n"
             "FROM db.tb1 AS t0\n"
             "ORDER BY id DESC\n"
@@ -2359,7 +2359,7 @@ class TestSelectStatement(TestCase):
                 .Limit(1)
                 .Into("@var")
                 .Into("@var")
-                .statement()
+                .Statement()
             )
 
         # Finished
@@ -2374,7 +2374,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Union(db.Select("*").From(db.tb2))
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "UNION DISTINCT\n"
@@ -2388,7 +2388,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Union(db.Select("*").From(db.tb2), all=True)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "UNION ALL\n"
@@ -2420,7 +2420,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "UNION DISTINCT\n"
@@ -2444,32 +2444,6 @@ class TestSelectStatement(TestCase):
             "ORDER BY id\n\t"
             "LIMIT 10\n"
             ")",
-        )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM db.tb1 AS t0\n"
-            "\tUNION DISTINCT\n"
-            "\t(\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t"
-            "\tUSING (id)\n\t"
-            "\tWHERE t0.id > 10\n\t"
-            "\tGROUP BY t0.id\n\t"
-            "\tHAVING id > 5\n\t"
-            "\tWINDOW w1 AS (\n\t\t"
-            "\tPARTITION BY id\n\t\t"
-            "\tORDER BY name\n\t"
-            "\t), w2 AS (\n\t\t"
-            "\tPARTITION BY name\n\t\t"
-            "\tORDER BY id\n\t"
-            "\t)\n\t"
-            "\tORDER BY id\n\t"
-            "\tLIMIT 10\n"
-            "\t)",
         )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = (
@@ -2506,7 +2480,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "UNION DISTINCT\n"
@@ -2552,53 +2526,6 @@ class TestSelectStatement(TestCase):
             "LIMIT 10\n"
             ")",
         )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM db.tb1 AS t0\n"
-            "\tUNION DISTINCT\n"
-            "\t(\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t"
-            "\tUSING (id)\n\t"
-            "\tWHERE t0.id > 10\n\t"
-            "\tGROUP BY t0.id\n\t"
-            "\tHAVING id > 5\n\t"
-            "\tWINDOW w1 AS (\n\t\t"
-            "\tPARTITION BY id\n\t\t"
-            "\tORDER BY name\n\t"
-            "\t), w2 AS (\n\t\t"
-            "\tPARTITION BY name\n\t\t"
-            "\tORDER BY id\n\t"
-            "\t)\n\t"
-            "\tORDER BY id\n\t"
-            "\tLIMIT 10\n"
-            "\t)\n"
-            "\tUNION ALL\n"
-            "\t(\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t"
-            "\tUSING (id)\n\t"
-            "\tWHERE t0.id > 10\n\t"
-            "\tGROUP BY t0.id\n\t"
-            "\tHAVING id > 5\n\t"
-            "\tWINDOW w1 AS (\n\t\t"
-            "\tPARTITION BY id\n\t\t"
-            "\tORDER BY name\n\t"
-            "\t), w2 AS (\n\t\t"
-            "\tPARTITION BY name\n\t\t"
-            "\tORDER BY id\n\t"
-            "\t)\n\t"
-            "\tORDER BY id\n\t"
-            "\tLIMIT 10\n"
-            "\t)",
-        )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = (
             db.Select("*")
@@ -2623,7 +2550,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "UNION DISTINCT\n"
@@ -2653,37 +2580,6 @@ class TestSelectStatement(TestCase):
             ")\n"
             ")",
         )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM db.tb1 AS t0\n"
-            "\tUNION DISTINCT\n"
-            "\t(\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t"
-            "\tUNION DISTINCT\n\t"
-            "\t(\n\t\t"
-            "\tSELECT *\n\t\t"
-            "\tFROM db.tb1 AS t0\n\t\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t\t"
-            "\tUSING (id)\n\t\t"
-            "\tWHERE t0.id > 10\n\t\t"
-            "\tGROUP BY t0.id\n\t\t"
-            "\tHAVING id > 5\n\t\t"
-            "\tWINDOW w1 AS (\n\t\t\t"
-            "\tPARTITION BY id\n\t\t\t"
-            "\tORDER BY name\n\t\t"
-            "\t), w2 AS (\n\t\t\t"
-            "\tPARTITION BY name\n\t\t\t"
-            "\tORDER BY id\n\t\t"
-            "\t)\n\t\t"
-            "\tORDER BY id\n\t\t"
-            "\tLIMIT 10\n\t"
-            "\t)\n"
-            "\t)",
-        )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLArgumentError):
             db.Select("*").Union(1)
@@ -2692,7 +2588,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.tb1).Intersect(db.Select("*").From(db.tb2))
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "INTERSECT DISTINCT\n"
@@ -2707,7 +2603,7 @@ class TestSelectStatement(TestCase):
         # Except
         dml = db.Select("*").From(db.tb1).Except(db.Select("*").From(db.tb2))
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "EXCEPT DISTINCT\n"
@@ -2731,7 +2627,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.Select("*").From(db.tb1))
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\nFROM (\n\tSELECT *\n\tFROM db.tb1 AS t0\n) AS t0",
         )
         self.assertEqual(dml.Execute(), self.TEST_DATA)
@@ -2739,7 +2635,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(db.Select("*").From(db.Select("*").From(db.tb1)))
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM (\n\t"
             "SELECT *\n\t"
@@ -2767,7 +2663,7 @@ class TestSelectStatement(TestCase):
             .Limit(10),
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM (\n\t"
             "SELECT *\n\t"
@@ -2790,30 +2686,6 @@ class TestSelectStatement(TestCase):
             "LIMIT 10\n"
             ") AS t0",
         )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM (\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t"
-            "\tUSING (id)\n\t"
-            "\tWHERE t0.id > 10\n\t"
-            "\tGROUP BY t0.id\n\t"
-            "\tHAVING id > 5\n\t"
-            "\tWINDOW w1 AS (\n\t\t"
-            "\tPARTITION BY id\n\t\t"
-            "\tORDER BY name\n\t"
-            "\t), w2 AS (\n\t\t"
-            "\tPARTITION BY name\n\t\t"
-            "\tORDER BY id\n\t"
-            "\t)\n\t"
-            "\tORDER BY id\n\t"
-            "\tLIMIT 10\n"
-            "\t) AS t0",
-        )
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Select("*").From(
             db.Select("*").From(
@@ -2832,7 +2704,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM (\n\t"
             "SELECT *\n\t"
@@ -2858,33 +2730,6 @@ class TestSelectStatement(TestCase):
             ") AS t0\n"
             ") AS t0",
         )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM (\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM (\n\t\t"
-            "\tSELECT *\n\t\t"
-            "\tFROM db.tb1 AS t0\n\t\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t\t"
-            "\tUSING (id)\n\t\t"
-            "\tWHERE t0.id > 10\n\t\t"
-            "\tGROUP BY t0.id\n\t\t"
-            "\tHAVING id > 5\n\t\t"
-            "\tWINDOW w1 AS (\n\t\t\t"
-            "\tPARTITION BY id\n\t\t\t"
-            "\tORDER BY name\n\t\t"
-            "\t), w2 AS (\n\t\t\t"
-            "\tPARTITION BY name\n\t\t\t"
-            "\tORDER BY id\n\t\t"
-            "\t)\n\t\t"
-            "\tORDER BY id\n\t\t"
-            "\tLIMIT 10\n\t"
-            "\t) AS t0\n"
-            "\t) AS t0",
-        )
 
         # Finished
         db.Drop(True)
@@ -2901,7 +2746,7 @@ class TestSelectStatement(TestCase):
             db.Select("t0.*").From(db.tb1).Join(db.Select("*").From(db.tb2), using="id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -2921,7 +2766,7 @@ class TestSelectStatement(TestCase):
             .Join(db.Select("*").From(db.tb2), using="id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -2959,7 +2804,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -2983,32 +2828,6 @@ class TestSelectStatement(TestCase):
             "LIMIT 10\n"
             ") AS t1\n\t"
             "USING (id)",
-        )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM db.tb1 AS t0\n"
-            "\tINNER JOIN (\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t"
-            "\tUSING (id)\n\t"
-            "\tWHERE t0.id > 10\n\t"
-            "\tGROUP BY t0.id\n\t"
-            "\tHAVING id > 5\n\t"
-            "\tWINDOW w1 AS (\n\t\t"
-            "\tPARTITION BY id\n\t\t"
-            "\tORDER BY name\n\t"
-            "\t), w2 AS (\n\t\t"
-            "\tPARTITION BY name\n\t\t"
-            "\tORDER BY id\n\t"
-            "\t)\n\t"
-            "\tORDER BY id\n\t"
-            "\tLIMIT 10\n"
-            "\t) AS t1\n\t"
-            "\tUSING (id)",
         )
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3036,7 +2855,7 @@ class TestSelectStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT *\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -3065,36 +2884,6 @@ class TestSelectStatement(TestCase):
             "USING (id)\n"
             ") AS t1",
         )
-        self.assertEqual(
-            dml.statement(1),
-            "\tSELECT *\n"
-            "\tFROM db.tb1 AS t0\n"
-            "\tINNER JOIN (\n\t"
-            "\tSELECT *\n\t"
-            "\tFROM db.tb1 AS t0\n\t"
-            "\tINNER JOIN (\n\t\t"
-            "\tSELECT *\n\t\t"
-            "\tFROM db.tb1 AS t0\n\t\t\t"
-            "\tUSE INDEX (idx1, ORDER BY)\n\t\t"
-            "\tINNER JOIN db.tb2 AS t1\n\t\t\t"
-            "\tUSE INDEX (PRIMARY, JOIN)\n\t\t\t"
-            "\tUSING (id)\n\t\t"
-            "\tWHERE t0.id > 10\n\t\t"
-            "\tGROUP BY t0.id\n\t\t"
-            "\tHAVING id > 5\n\t\t"
-            "\tWINDOW w1 AS (\n\t\t\t"
-            "\tPARTITION BY id\n\t\t\t"
-            "\tORDER BY name\n\t\t"
-            "\t), w2 AS (\n\t\t\t"
-            "\tPARTITION BY name\n\t\t\t"
-            "\tORDER BY id\n\t\t"
-            "\t)\n\t\t"
-            "\tORDER BY id\n\t\t"
-            "\tLIMIT 10\n\t"
-            "\t) AS t1\n\t\t"
-            "\tUSING (id)\n"
-            "\t) AS t1",
-        )
 
         # Finished
         db.Drop(True)
@@ -3108,7 +2897,7 @@ class TestSelectStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.tb1.Select("t0.*").Join(db.Select("*").From(db.tb2), using="id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -3127,7 +2916,7 @@ class TestSelectStatement(TestCase):
             .Join(db.Select("*").From(db.tb2), using="id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "SELECT t0.*\n"
             "FROM db.tb1 AS t0\n"
             "INNER JOIN (\n\t"
@@ -3432,7 +3221,7 @@ class TestInsertStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Values(4)
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(stmt, "INSERT INTO db.tb1\nVALUES (%s,%s,%s,%s)")
         m = RE.match(stmt)
         self.assertIsNotNone(m, "RE match failed")
@@ -3446,7 +3235,7 @@ class TestInsertStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Columns(db.tb1.id, "name", "price", "dt").Values(4)
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt, "INSERT INTO db.tb1\n\t(id, name, price, dt)\nVALUES (%s,%s,%s,%s)"
         )
@@ -3467,7 +3256,7 @@ class TestInsertStatement(TestCase):
             .Values(4)
             .OnDuplicate("name=VALUES(name)", "price=VALUES(price)")
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "INSERT INTO db.tb1\n\t"
@@ -3500,7 +3289,7 @@ class TestInsertStatement(TestCase):
             .Columns(db.tb1.id, "name", "price", "dt")
             .Values(4)
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "INSERT HIGH_PRIORITY IGNORE INTO db.tb1 PARTITION (from201201)\n\t"
@@ -3519,7 +3308,7 @@ class TestInsertStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Values(4).RowAlias("new")
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(stmt, "INSERT INTO db.tb1\nVALUES (%s,%s,%s,%s) AS new")
         m = RE.match(stmt)
         self.assertIsNotNone(m, "RE match failed")
@@ -3539,7 +3328,7 @@ class TestInsertStatement(TestCase):
             .RowAlias("new")
             .OnDuplicate("name=new.name", "price=new.price")
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "INSERT INTO db.tb1\n\t"
@@ -3573,7 +3362,7 @@ class TestInsertStatement(TestCase):
             .Values(4)
             .RowAlias("new", "i", "n", "p", "d")
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "INSERT INTO db.tb1\n\t(id, name, price, dt)\nVALUES (%s,%s,%s,%s) AS new (i, n, p, d)",
@@ -3596,7 +3385,7 @@ class TestInsertStatement(TestCase):
             .RowAlias("new", "i", "n", "p", "d")
             .OnDuplicate("name=n", "price=p")
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "INSERT INTO db.tb1\n\t"
@@ -3625,11 +3414,11 @@ class TestInsertStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).statement()
+            db.Insert(db.tb1).Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).Columns("id", "name").statement()
+            db.Insert(db.tb1).Columns("id", "name").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).Where("id = 1").Values(2).statement()
+            db.Insert(db.tb1).Where("id = 1").Values(2).Statement()
 
         # Finished
         db.Drop(True)
@@ -3642,7 +3431,7 @@ class TestInsertStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Set("id=%s", "name=%s", "price=%s", "dt=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\nSET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
@@ -3659,7 +3448,7 @@ class TestInsertStatement(TestCase):
             .RowAlias("new")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s\nAS new",
         )
@@ -3678,7 +3467,7 @@ class TestInsertStatement(TestCase):
             .OnDuplicate("name=new.name", "price=new.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s\nAS new\n"
             "ON DUPLICATE KEY UPDATE\n\tname=new.name,\n\tprice=new.price",
@@ -3701,7 +3490,7 @@ class TestInsertStatement(TestCase):
             .RowAlias("new", "i", "n", "p", "d")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s\nAS new (i, n, p, d)",
         )
@@ -3720,7 +3509,7 @@ class TestInsertStatement(TestCase):
             .OnDuplicate("name=n", "price=p")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s\nAS new (i, n, p, d)\n"
             "ON DUPLICATE KEY UPDATE\n\tname=n,\n\tprice=p",
@@ -3738,7 +3527,7 @@ class TestInsertStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).Columns("id").Set("id = 1").statement()
+            db.Insert(db.tb1).Columns("id").Set("id = 1").Statement()
 
         # Finished
         db.Drop(True)
@@ -3753,7 +3542,7 @@ class TestInsertStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Select("*").From(db.tb2)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0",
         )
         self.assertEqual(dml.Execute(), 6)
@@ -3766,7 +3555,7 @@ class TestInsertStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Select("*").From(db.tb2).Where("id=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(1), 1)
@@ -3785,7 +3574,7 @@ class TestInsertStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Insert(db.tb1).Select("t0.*").From(db.tb2).Join(db.tb3, "t0.id=t1.id")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SELECT t0.*\n"
             "FROM db.tb2 AS t0\n"
@@ -3810,7 +3599,7 @@ class TestInsertStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SELECT *\n"
             "FROM db.tb3 AS t0\n"
@@ -3835,7 +3624,7 @@ class TestInsertStatement(TestCase):
             .From(db.tb2)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT\n\tid,\n\tname,\n\tprice,\n\tdt\n"
@@ -3857,7 +3646,7 @@ class TestInsertStatement(TestCase):
             .Where("id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT\n\tid,\n\tname,\n\tprice,\n\tdt\n"
@@ -3886,7 +3675,7 @@ class TestInsertStatement(TestCase):
             .Join(db.tb3, "t0.id=t1.id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT t0.*\n"
@@ -3913,7 +3702,7 @@ class TestInsertStatement(TestCase):
             )
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT *\n"
@@ -3940,7 +3729,7 @@ class TestInsertStatement(TestCase):
             .From("c1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "WITH c1 AS (\n\t"
@@ -3959,9 +3748,9 @@ class TestInsertStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).Where("id = 1").Select("*").statement()
+            db.Insert(db.tb1).Where("id = 1").Select("*").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Insert(db.tb1).Where("id = 1").With("c1", "apple").statement()
+            db.Insert(db.tb1).Where("id = 1").With("c1", "apple").Statement()
 
         # Finished
         db.Drop(True)
@@ -3974,7 +3763,7 @@ class TestInsertStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.tb1.Insert().Columns(db.tb1.id, "name", "price", "dt").Values(4)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t(id, name, price, dt)\nVALUES (%s,%s,%s,%s)",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
@@ -3991,7 +3780,7 @@ class TestInsertStatement(TestCase):
             .RowAlias("new", "i", "n", "p", "d")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n"
             "SET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s\nAS new (i, n, p, d)",
         )
@@ -4009,7 +3798,7 @@ class TestInsertStatement(TestCase):
             db.tb1.Insert().Columns(db.tb1.columns).Select(db.tb2.columns).From(db.tb2)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "INSERT INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT\n\tid,\n\tname,\n\tprice,\n\tdt\n"
@@ -4062,7 +3851,7 @@ class TestReplaceStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Replace(db.tb1).Values(4)
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(stmt, "REPLACE INTO db.tb1\nVALUES (%s,%s,%s,%s)")
         m = RE.match(stmt)
         self.assertIsNotNone(m, "RE match failed")
@@ -4080,7 +3869,7 @@ class TestReplaceStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Replace(db.tb1).Columns(db.tb1.id, "name", "price", "dt").Values(4)
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt, "REPLACE INTO db.tb1\n\t(id, name, price, dt)\nVALUES (%s,%s,%s,%s)"
         )
@@ -4104,7 +3893,7 @@ class TestReplaceStatement(TestCase):
             .Columns(db.tb1.id, "name", "price", "dt")
             .Values(4)
         )
-        stmt = dml.statement()
+        stmt = dml.Statement()
         self.assertEqual(
             stmt,
             "REPLACE LOW_PRIORITY INTO db.tb1 PARTITION (from201201)\n\t"
@@ -4127,11 +3916,11 @@ class TestReplaceStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).statement()
+            db.Replace(db.tb1).Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).Columns("id", "name").statement()
+            db.Replace(db.tb1).Columns("id", "name").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).Where("id = 1").Values(2).statement()
+            db.Replace(db.tb1).Where("id = 1").Values(2).Statement()
 
         # Finished
         db.Drop(True)
@@ -4144,7 +3933,7 @@ class TestReplaceStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Replace(db.tb1).Set("id=%s", "name=%s", "price=%s", "dt=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\nSET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
@@ -4160,7 +3949,7 @@ class TestReplaceStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).Columns("id").Set("id = 1").statement()
+            db.Replace(db.tb1).Columns("id").Set("id = 1").Statement()
 
         # Finished
         db.Drop(True)
@@ -4176,7 +3965,7 @@ class TestReplaceStatement(TestCase):
         dml = db.Replace(db.tb1).Select("*").From(db.tb2)
         dml2 = db.Replace(db.tb1).Select("*").From(db.tb3)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0",
         )
         self.assertEqual(dml.Execute(), 6)
@@ -4194,7 +3983,7 @@ class TestReplaceStatement(TestCase):
         dml = db.Replace(db.tb1).Select("*").From(db.tb2).Where("id=%s")
         dml2 = db.Replace(db.tb1).Select("*").From(db.tb3).Where("id=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(1), 1)
@@ -4214,7 +4003,7 @@ class TestReplaceStatement(TestCase):
             db.Replace(db.tb1).Select("t0.*").From(db.tb3).Join(db.tb3, "t0.id=t1.id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\n"
             "SELECT t0.*\n"
             "FROM db.tb2 AS t0\n"
@@ -4246,7 +4035,7 @@ class TestReplaceStatement(TestCase):
             .From(db.tb3)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "SELECT\n\tid,\n\tname,\n\tprice,\n\tdt\n"
@@ -4272,7 +4061,7 @@ class TestReplaceStatement(TestCase):
             .From("c1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\n\t"
             "(id, name, price, dt)\n"
             "WITH c1 AS (\n\t"
@@ -4291,9 +4080,9 @@ class TestReplaceStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).Where("id = 1").Select("*").statement()
+            db.Replace(db.tb1).Where("id = 1").Select("*").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Replace(db.tb1).Where("id = 1").With("c1", "apple").statement()
+            db.Replace(db.tb1).Where("id = 1").With("c1", "apple").Statement()
 
         # Finished
         db.Drop(True)
@@ -4306,7 +4095,7 @@ class TestReplaceStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.tb1.Replace().Columns(db.tb1.id, "name", "price", "dt").Values(4)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\n\t(id, name, price, dt)\nVALUES (%s,%s,%s,%s)",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
@@ -4323,7 +4112,7 @@ class TestReplaceStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.tb1.Replace().Set("id=%s", "name=%s", "price=%s", "dt=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\nSET\n\tid=%s,\n\tname=%s,\n\tprice=%s,\n\tdt=%s",
         )
         self.assertEqual(dml.Execute(self.TEST_DATA1, True), 6)
@@ -4343,7 +4132,7 @@ class TestReplaceStatement(TestCase):
         dml = db.tb1.Replace().Select("*").From(db.tb2)
         dml2 = db.tb1.Replace().Select("*").From(db.tb3)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "REPLACE INTO db.tb1\nSELECT *\nFROM db.tb2 AS t0",
         )
         self.assertEqual(dml.Execute(), 6)
@@ -4494,7 +4283,7 @@ class TestUpdateStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Update(db.tb1).Set("name=%s")
-        self.assertEqual(dml.statement(), "UPDATE db.tb1 AS t0\nSET name=%s")
+        self.assertEqual(dml.Statement(), "UPDATE db.tb1 AS t0\nSET name=%s")
         self.assertEqual(dml.Execute("n1"), 6)
         self.assertEqual(
             db.Select("name", distinct=True).From(db.tb1).Execute(), (("n1",),)
@@ -4507,7 +4296,7 @@ class TestUpdateStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Update(db.tb1).Set("name=%s", "price=%s")
         self.assertEqual(
-            dml.statement(), "UPDATE db.tb1 AS t0\nSET\n\tname=%s,\n\tprice=%s"
+            dml.Statement(), "UPDATE db.tb1 AS t0\nSET\n\tname=%s,\n\tprice=%s"
         )
         self.assertEqual(dml.Execute(["m1", 10.0]), 6)
         self.assertEqual(
@@ -4523,7 +4312,7 @@ class TestUpdateStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Update(db.tb1).Set("name=%s", "price=%s").Where("id=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\nSET\n\tname=%s,\n\tprice=%s\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(["o1", 30.0, 1]), 1)
@@ -4549,7 +4338,7 @@ class TestUpdateStatement(TestCase):
             .OrderBy("id DESC")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "SET\n\tname=%s,\n\tprice=%s\n"
             "WHERE id=%s\n"
@@ -4563,7 +4352,7 @@ class TestUpdateStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Update(db.tb1).Set("name=%s", "price=%s").OrderBy("id DESC").Limit(1)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "SET\n\tname=%s,\n\tprice=%s\n"
             "ORDER BY id DESC\n"
@@ -4593,7 +4382,7 @@ class TestUpdateStatement(TestCase):
             .Where("id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE LOW_PRIORITY IGNORE db.tb1 PARTITION (from201201) AS t0\n"
             "SET\n\tname=%s,\n\tprice=%s\n"
             "WHERE id=%s",
@@ -4614,7 +4403,7 @@ class TestUpdateStatement(TestCase):
             .Where("id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n\tUSE INDEX (idx1)\n"
             "SET\n\tname=%s,\n\tprice=%s\n"
             "WHERE id=%s",
@@ -4626,11 +4415,11 @@ class TestUpdateStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Update(db.tb1).Where("id=1").statement()
+            db.Update(db.tb1).Where("id=1").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Update(db.tb1).Where("id=1").Set("name=%s").statement()
+            db.Update(db.tb1).Where("id=1").Set("name=%s").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Update(db.tb1).Where("id=1").UseIndex("idx1").statement()
+            db.Update(db.tb1).Where("id=1").UseIndex("idx1").Statement()
 
         # Finished
         db.Drop(True)
@@ -4647,7 +4436,7 @@ class TestUpdateStatement(TestCase):
             .Set("t0.name=t1.name", "t0.price=t1.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
@@ -4663,7 +4452,7 @@ class TestUpdateStatement(TestCase):
             .Set("t0.name=t1.name", "t0.price=t1.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "INNER JOIN db.tb3 AS t1\n\tON t0.id=t1.id\n"
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
@@ -4681,7 +4470,7 @@ class TestUpdateStatement(TestCase):
             .Where("t0.id=1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
             "INNER JOIN db.tb3 AS t2\n\tUSING (id)\n"
@@ -4704,7 +4493,7 @@ class TestUpdateStatement(TestCase):
             .Where("t0.id=1")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
             "INNER JOIN db.tb3 AS t2\n\tUSING (id)\n"
@@ -4727,7 +4516,7 @@ class TestUpdateStatement(TestCase):
             .Set("t0.name=t1.name", "t0.price=t1.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n\tUSE INDEX (idx1)\n"
             "INNER JOIN db.tb2 AS t1\n\tUSE INDEX (idx1)\n\tUSING (id)\n"
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
@@ -4744,7 +4533,7 @@ class TestUpdateStatement(TestCase):
             .Set("t0.name=t1.name", "t0.price=t1.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n\tUSE INDEX (idx1)\n"
             "INNER JOIN db.tb3 AS t1\n\tUSE INDEX (idx1)\n\tUSING (id)\n"
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
@@ -4754,7 +4543,7 @@ class TestUpdateStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         with self.assertRaises(errors.DMLClauseError):
-            db.Update(db.tb1).Where("id=1").Join(db.tb1).statement()
+            db.Update(db.tb1).Where("id=1").Join(db.tb1).Statement()
 
         # Finished
         db.Drop(True)
@@ -4771,7 +4560,7 @@ class TestUpdateStatement(TestCase):
             .Set("t0.name=t1.name", "t0.price=t1.price")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "UPDATE db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\tUSING (id)\n"
             "SET\n\tt0.name=t1.name,\n\tt0.price=t1.price",
@@ -4939,7 +4728,7 @@ class TestDeleteStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Delete(db.tb1).Where("id=%s")
-        self.assertEqual(dml.statement(), "DELETE FROM db.tb1 AS t0\nWHERE id=%s")
+        self.assertEqual(dml.Statement(), "DELETE FROM db.tb1 AS t0\nWHERE id=%s")
         self.assertEqual(dml.Execute(1), 1)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[1:])
         self.assertEqual(await dml.aioExecute(2), 1)
@@ -4948,7 +4737,7 @@ class TestDeleteStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Delete(db.tb1, "from201202").Where("id=%s")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE FROM db.tb1 AS t0 PARTITION (from201202)\nWHERE id=%s",
         )
         self.assertEqual(dml.Execute(3), 1)
@@ -4959,7 +4748,7 @@ class TestDeleteStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Delete(db.tb1, None, True, True, True, "t").OrderBy("id DESC").Limit(1)
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE LOW_PRIORITY QUICK IGNORE FROM db.tb1 AS t\n"
             "ORDER BY id DESC\n"
             "LIMIT 1",
@@ -4973,7 +4762,7 @@ class TestDeleteStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Delete(db.tb2).UseIndex(db.tb2.idx1).Where("id=%s")
-        self.assertEqual(dml.statement(), "DELETE FROM db.tb2 AS t0\nWHERE id=%s")
+        self.assertEqual(dml.Statement(), "DELETE FROM db.tb2 AS t0\nWHERE id=%s")
         self.assertEqual(dml.Execute(1), 1)
         self.assertEqual(db.Select("*").From(db.tb2).Execute(), self.TEST_DATA[1:])
         self.assertEqual(await dml.aioExecute(2), 1)
@@ -4981,7 +4770,7 @@ class TestDeleteStatement(TestCase):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.Delete(db.tb2)
-        self.assertEqual(dml.statement(), "DELETE FROM db.tb2 AS t0")
+        self.assertEqual(dml.Statement(), "DELETE FROM db.tb2 AS t0")
         self.assertEqual(dml.Execute(), 4)
         dml = db.Delete(db.tb3)
         self.assertEqual(await dml.aioExecute(), 6)
@@ -5001,7 +4790,7 @@ class TestDeleteStatement(TestCase):
             .Where("t1.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0 FROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\t"
             "ON t0.id=t1.id\n"
@@ -5023,7 +4812,7 @@ class TestDeleteStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0, t1 FROM db.tb2 AS t0\n"
             "INNER JOIN db.tb3 AS t1\n\t"
             "ON t0.id=t1.id\n"
@@ -5043,7 +4832,7 @@ class TestDeleteStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0, t1 FROM db.tb2 PARTITION (from201202) AS t0\n"
             "INNER JOIN db.tb3 AS t1\n\t"
             "ON t0.id=t1.id\n"
@@ -5063,7 +4852,7 @@ class TestDeleteStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0, t1 FROM db.tb2 PARTITION (from201203) AS t0\n"
             "INNER JOIN db.tb3 PARTITION (from201202) AS t1\n\t"
             "ON t0.id=t1.id\n"
@@ -5085,7 +4874,7 @@ class TestDeleteStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0, t1 FROM db.tb2 AS t0\n\t"
             "USE INDEX (idx1)\n"
             "INNER JOIN db.tb3 AS t1\n\t"
@@ -5117,9 +4906,9 @@ class TestDeleteStatement(TestCase):
                 .Limit(1)
             )
         with self.assertRaises(errors.DMLClauseError):
-            db.Delete(db.tb1).Join(db.tb2, "t0.id=t1.id").Where("t0.id=1").statement()
+            db.Delete(db.tb1).Join(db.tb2, "t0.id=t1.id").Where("t0.id=1").Statement()
         with self.assertRaises(errors.DMLClauseError):
-            db.Delete(db.tb1).Where("id=1").Join(db.tb2, "t0.id=t1.id").statement()
+            db.Delete(db.tb1).Where("id=1").Join(db.tb2, "t0.id=t1.id").Statement()
 
         # Finished
         db.Drop(True)
@@ -5131,7 +4920,7 @@ class TestDeleteStatement(TestCase):
         db = self.prepareDatabase()
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.tb1.Delete().Where("id=%s")
-        self.assertEqual(dml.statement(), "DELETE FROM db.tb1 AS t0\nWHERE id=%s")
+        self.assertEqual(dml.Statement(), "DELETE FROM db.tb1 AS t0\nWHERE id=%s")
         self.assertEqual(dml.Execute(1), 1)
         self.assertEqual(db.Select("*").From(db.tb1).Execute(), self.TEST_DATA[1:])
         self.assertEqual(await dml.aioExecute(2), 1)
@@ -5145,7 +4934,7 @@ class TestDeleteStatement(TestCase):
             .Where("t1.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "DELETE t0 FROM db.tb1 AS t0\n"
             "INNER JOIN db.tb2 AS t1\n\t"
             "ON t0.id=t1.id\n"
@@ -5299,7 +5088,7 @@ class TestWithStatement(TestCase):
             .From("cte")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH RECURSIVE cte (n) AS (\n\t"
             "SELECT 1\n\t"
             "UNION ALL\n\t"
@@ -5326,7 +5115,7 @@ class TestWithStatement(TestCase):
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         dml = db.With("c1", db.Select("*").From(db.tb2)).Select("*").From("c1")
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
@@ -5346,7 +5135,7 @@ class TestWithStatement(TestCase):
             .Join("c2", "t0.id=t1.id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
@@ -5372,7 +5161,7 @@ class TestWithStatement(TestCase):
             .Union(db.Select("*").From("c2"), True)
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
@@ -5401,7 +5190,7 @@ class TestWithStatement(TestCase):
             .Join(db.tb3, "t0.id=t1.id")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
@@ -5431,7 +5220,7 @@ class TestWithStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb3 AS t0\n"
@@ -5481,7 +5270,7 @@ class TestWithStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
@@ -5505,7 +5294,7 @@ class TestWithStatement(TestCase):
             .Where("t0.id=%s")
         )
         self.assertEqual(
-            dml.statement(),
+            dml.Statement(),
             "WITH c1 AS (\n\t"
             "SELECT *\n\t"
             "FROM db.tb2 AS t0\n"
